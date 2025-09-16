@@ -1,5 +1,5 @@
 // Configurações da API Ideris (será preenchida pelo GitHub Actions)
-const PRIVATE_KEY = "%%IDERIS_PRIVATE_KEY%%";
+const PRIVATE_KEY = "IDERIS_PRIVATE_KEY";
 const AUTH_URL = "https://apiv3.ideris.com.br/login";
 const MARKET_URL = "https://apiv3.ideris.com.br/settings/marketplace";
 const ORDERS_URL = "https://apiv3.ideris.com.br/order/search?statusId=1007";
