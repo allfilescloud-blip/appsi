@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Atendimentos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/main.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+</head>
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <header id="header" class="hidden">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="logo">
+                    <i class="fas fa-headset logo-icon"></i>
+                    <h1>Sistema de Atendimentos</h1>
+                </div>
+                <div class="nav-menu">
+                    <button id="btnNavDashboard" class="nav-btn active">
+                        <i class="fas fa-chart-bar"></i> Dashboard
+                    </button>
+                    <button id="btnNavListagem" class="nav-btn">
+                        <i class="fas fa-list"></i> Chamados
+                    </button>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <!-- Botão Ferramentas com Submenu -->
+                <div class="tools-menu">
+                    <button class="tools-btn">
+                        <i class="fas fa-tools"></i> Ferramentas
+                        <i class="fas fa-chevron-down" style="font-size: 12px;"></i>
+                    </button>
+                    <div class="tools-submenu">
+                        <div class="submenu-item" id="btnEstoque">
+                            <i class="fas fa-boxes"></i> Estoque
+                        </div>
+                        <div class="submenu-item" id="btnVerificacao">
+                            <i class="fas fa-check-circle"></i> Verificação
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="user-menu hidden" id="userMenu">
+                    <div class="user-avatar">
+                        <span id="userInitials">U</span>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name" id="userName">Usuário</span>
+                        <span class="user-status">Online</span>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                    
+                    <div class="dropdown-menu" id="dropdownMenu">
+                        <div class="dropdown-item" id="btnConfiguracoes"><i class="fas fa-cog"></i> Configurações</div>
+                        <div class="dropdown-item" id="btnLogout"><i class="fas fa-sign-out-alt"></i> Sair</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Página de Login -->
+        <div id="paginaLogin">
+            <div class="login-container">
+                <div class="login-card">
+                    <div class="login-logo">
+                        <i class="fas fa-headset"></i>
+                        <h2 class="login-title">Sistema de Atendimentos</h2>
+                        <p class="login-subtitle">Faça login para acessar o sistema</p>
+                    </div>
+                    
+                    <div id="loginForm" class="login-form">
+                        <div class="form-group">
+                            <label for="loginEmail">Email:</label>
+                            <input type="email" id="loginEmail" placeholder="Seu email">
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Senha:</label>
+                            <input type="password" id="loginPassword" placeholder="Sua senha">
+                        </div>
+                        <button id="btnFazerLogin" class="btn" style="width: 100%"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+                        <div id="loginMessage" class="message message-error hidden"></div>
+                    </div>
+                    
+                    <div id="signupSection" class="login-form hidden">
+                        <h3 class="login-title">Criar Nova Conta</h3>
+                        <div class="form-group">
+                            <label for="signupName">Nome:</label>
+                            <input type="text" id="signupName" placeholder="Seu nome completo">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupEmail">Email:</label>
+                            <input type="email" id="signupEmail" placeholder="Seu email">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPassword">Senha:</label>
+                            <input type="password" id="signupPassword" placeholder="Sua senha (mínimo 6 caracteres)">
+                        </div>
+                        <div class="form-group">
+                            <label for="signupConfirmPassword">Confirmar Senha:</label>
+                            <input type="password" id="signupConfirmPassword" placeholder="Confirme sua senha">
+                        </div>
+                        <button id="btnCriarConta" class="btn" style="width: 100%"><i class="fas fa-user-plus"></i> Criar Conta</button>
+                        <div id="signupMessage" class="message"></div>
+                        
+                        <div class="toggle-forms">
+                            <button id="btnVoltarLogin" class="toggle-btn"><i class="fas fa-arrow-left"></i> Voltar para o login</button>
+                        </div>
+                    </div>
+                    
+                    <div class="login-options" id="loginOptions">
+                        <p>Não possui uma conta?</p>
+                        <button id="btnMostrarCadastro" class="toggle-btn">Clique aqui para cadastrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Página de Dashboard -->
+        <div id="paginaDashboard" class="hidden">
+            <h2>Dashboard</h2>
+            
+            <div class="dashboard">
+                <!-- Seção de Pedidos Ideris -->
+                <div class="ideris-section">
+                    <div class="ideris-header">
+                        <h3>Pedidos Ideris</h3>
+                        <button id="btnAtualizarIderis" class="btn"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                    </div>
+                    <div class="ideris-status" id="iderisStatus">Aguardando autenticação...</div>
+                    <div class="ideris-grid" id="iderisGrid"></div>
+                </div>
+                
+                <!-- Cards de Chamados -->
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Chamados em Aberto Hoje</h3>
+                        <div class="number" id="chamadosAbertosHoje">0</div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Chamados na Semana</h3>
+                        <div class="number" id="chamadosSemana">0</div>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <h3>Chamados no Mês</h3>
+                        <div class="number" id="chamadosMes">0</div>
+                    </div>
+                </div>
+                
+                <!-- Estatísticas por Responsável -->
+                <div class="chart-container">
+                    <h3>Chamados Abertos por Responsável</h3>
+                    <div class="user-stats" id="userStats">
+                        <div class="loading">Carregando estatísticas...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Página de Listagem -->
+        <div id="paginaListagem" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h2>Chamados</h2>
+                <button id="btnNovoChamado" class="btn"><i class="fas fa-plus"></i> Novo Chamado</button>
+            </div>
+            
+            <div class="search-container">
+                <input type="text" id="inputBusca" placeholder="Buscar por código ou pedido...">
+                <button id="btnBuscar" class="btn"><i class="fas fa-search"></i> Buscar</button>
+                <button id="btnLimparBusca" class="btn voltar"><i class="fas fa-times"></i> Limpar</button>
+            </div>
+            
+            <!-- Filtros de pesquisa rápida -->
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="filtroResponsavel">Responsável:</label>
+                    <select id="filtroResponsavel">
+                        <option value="">Todos os responsáveis</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filtroTipo">Tipo:</label>
+                    <select id="filtroTipo">
+                        <option value="">Todos os tipos</option>
+                        <option value="Devolução">Devolução</option>
+                        <option value="Reembolso">Reembolso</option>
+                        <option value="Fraude">Fraude</option>
+                        <option value="Contatar MarketPlace">Contatar MarketPlace</option>
+                        <option value="Contatar Cliente">Contatar Cliente</option>
+                        <option value="Interno">Interno</option>
+                        <option value="Defeito">Defeito</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filtroMarketplace">Marketplace:</label>
+                    <select id="filtroMarketplace">
+                        <option value="">Todos os marketplaces</option>
+                        <option value="Mercado Livre">Mercado Livre</option>
+                        <option value="Amazon">Amazon</option>
+                        <option value="N/A">N/A</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filtroStatus">Status:</label>
+                    <select id="filtroStatus">
+                        <option value="">Todos os status</option>
+                        <option value="Aberto">Aberto</option>
+                        <option value="Em andamento">Em andamento</option>
+                        <option value="Revisão">Revisão</option>
+                        <option value="Fechado">Fechado</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button id="btnAplicarFiltros" class="btn"><i class="fas fa-filter"></i> Aplicar</button>
+                    <button id="btnLimparFiltros" class="btn voltar"><i class="fas fa-times"></i> Limpar</button>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="abertos">
+                    Chamados Abertos <span class="tab-badge" id="badgeAbertos">0</span>
+                </div>
+                <div class="tab" data-tab="fechados">
+                    Chamados Fechados <span class="tab-badge" id="badgeFechados">0</span>
+                </div>
+            </div>
+            
+            <div class="chamados-list">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Pedido</th>
+                            <th>Título</th>
+                            <th>Responsável</th>
+                            <th>Tipo</th>
+                            <th>Marketplace</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaChamados">
+                        <tr>
+                            <td colspan="7" class="loading">Carregando chamados...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Página de Formulário (inicialmente oculta) -->
+        <div id="paginaFormulario" class="hidden">
+            <button id="btnVoltar" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            <h2>Novo Chamado</h2>
+            
+            <div class="form-container">
+                <div class="codigo-controle">
+                    Código: <span id="codigoControle">CARREGANDO...</span>
+                </div>
+                
+                <form id="formChamado">
+                    <div class="form-group">
+                        <label for="pedido">Número do Pedido:</label>
+                        <input type="text" id="pedido" required>
+                        <div id="pedidoAlert" class="alert alert-warning hidden">
+                            <i class="fas fa-exclamation-triangle"></i> Já existe um chamado aberto para este pedido.
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="responsavel">Responsável:</label>
+                        <select id="responsavel" required>
+                            <option value="">Selecione um responsável</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipoChamado">Tipo de Chamado:</label>
+                        <select id="tipoChamado" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="Devolução">Devolução</option>
+                            <option value="Reembolso">Reembolso</option>
+                            <option value="Fraude">Fraude</option>
+                            <option value="Contatar MarketPlace">Contatar MarketPlace</option>
+                            <option value="Contatar Cliente">Contatar Cliente</option>
+                            <option value="Interno">Interno</option>
+                            <option value="Defeito">Defeito</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group hidden" id="marketplaceGroup">
+                        <label for="marketplace">Marketplace:</label>
+                        <select id="marketplace">
+                            <option value="">Selecione o marketplace</option>
+                            <option value="Mercado Livre">Mercado Livre</option>
+                            <option value="Amazon">Amazon</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="assunto">Assunto:</label>
+                        <input type="text" id="assunto" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descricao">Descrição:</label>
+                        <textarea id="descricao" required></textarea>
+                    </div>
+                    
+                    <!-- Área de upload de arquivos -->
+                    <div class="upload-container">
+                        <label>Anexos (Máximo 3 arquivos, 5MB no total):</label>
+                        <div class="upload-area" id="uploadArea">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <p class="upload-text">Arraste arquivos aqui ou clique para selecionar</p>
+                            <label class="upload-button">
+                                <i class="fas fa-plus"></i> Selecionar Arquivos
+                                <input type="file" id="fileInput" multiple style="display: none;">
+                            </label>
+                        </div>
+                        
+                        <div class="file-list" id="fileList"></div>
+                        
+                        <div class="upload-status" id="uploadStatus"></div>
+                        <div class="upload-error" id="uploadError"></div>
+                    </div>
+                    
+                    <button type="submit" class="btn"><i class="fas fa-save"></i> Salvar Chamado</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Página de Detalhes do Chamado (inicialmente oculta) -->
+        <div id="paginaDetalhes" class="hidden">
+            <button id="btnVoltarDetalhes" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            
+            <div class="chamado-header">
+                <h2>Detalhes do Chamado: <span id="detalhesCodigo"></span></h2>
+                <div class="status" id="detalhesStatus"></div>
+            </div>
+            
+            <div class="form-container">
+                <div class="chamado-info">
+                    <div class="info-item">
+                        <div class="info-label">Pedido</div>
+                        <div id="detalhesPedido"></div>
+                    </div>
+					<!-- Na página de detalhes, modifique a seção do responsável: -->
+					<div class="info-item">
+						<div class="info-label">Responsável</div>
+						<div id="detalhesResponsavelContainer">
+							<span id="detalhesResponsavel"></span>
+							<button id="btnAlterarResponsavel" class="btn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px;">
+								<i class="fas fa-user-edit"></i> Alterar
+							</button>
+						</div>
+						<div id="alterarResponsavelForm" class="hidden" style="margin-top: 10px;">
+							<select id="novoResponsavel" style="width: 200px; margin-right: 10px;">
+								<option value="">Selecione um responsável</option>
+							</select>
+							<button id="btnConfirmarResponsavel" class="btn btn-success" style="padding: 4px 8px; font-size: 12px;">
+								<i class="fas fa-check"></i> Confirmar
+							</button>
+							<button id="btnCancelarResponsavel" class="btn voltar" style="padding: 4px 8px; font-size: 12px;">
+								<i class="fas fa-times"></i> Cancelar
+							</button>
+						</div>
+					</div>
+                    <div class="info-item">
+                        <div class="info-label">Tipo</div>
+                        <div id="detalhesTipo"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Marketplace</div>
+                        <div id="detalhesMarketplace"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Assunto</div>
+                        <div id="detalhesAssunto"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Data de Abertura</div>
+                        <div id="detalhesData"></div>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Descrição Inicial</div>
+                    <div id="detalhesDescricao" class="message"></div>
+                </div>
+                
+                <!-- Área de anexos na página de detalhes -->
+                <div class="anexos-container" id="anexosContainer">
+                    <div class="info-label">Anexos</div>
+                    <div class="anexos-list" id="anexosList">
+                        <div class="loading">Carregando anexos...</div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Histórico de Interações</h3>
+            <div class="chat-container" id="chatContainer">
+                <div class="loading">Carregando interações...</div>
+            </div>
+            
+            <div class="add-interaction">
+                <div class="form-group">
+                    <label for="novaInteracao">Adicionar nova interação:</label>
+                    <textarea id="novaInteracao" placeholder="Digite sua mensagem..."></textarea>
+                </div>
+                
+                <!-- Área de upload de arquivos para interações -->
+                <div class="upload-container">
+                    <label>Anexos para esta interação (Máximo 3 arquivos, 5MB no total):</label>
+                    <div class="upload-area" id="uploadAreaInteracao">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <p class="upload-text">Arraste arquivos aqui ou clique para selecionar</p>
+                        <label class="upload-button">
+                            <i class="fas fa-plus"></i> Selecionar Arquivos
+                            <input type="file" id="fileInputInteracao" multiple style="display: none;">
+                        </label>
+                    </div>
+                    
+                    <div class="file-list" id="fileListInteracao"></div>
+                    
+                    <div class="upload-status" id="uploadStatusInteracao"></div>
+                    <div class="upload-error" id="uploadErrorInteracao"></div>
+                </div>
+                
+                <button id="btnAdicionarInteracao" class="btn"><i class="fas fa-plus-circle"></i> Adicionar Interação</button>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="btnReabrirChamado" class="btn btn-warning hidden"><i class="fas fa-undo"></i> Reabrir Chamado</button>
+                <button id="btnFinalizarChamado" class="btn btn-success hidden"><i class="fas fa-check"></i> Finalizar Chamado</button>
+            </div>
+        </div>
+        
+        <!-- Página de Verificação (inicialmente oculta) -->
+        <div id="paginaVerificacao" class="hidden">
+            <button id="btnVoltarVerificacao" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            
+            <div class="verificacao-header">
+                <h2>Verificação de Pedidos - Hub Ideris</h2>
+                <button id="btnAtualizarVerificacao" class="btn"><i class="fas fa-sync-alt"></i> Atualizar</button>
+            </div>
+            
+            <div class="verificacao-container">
+                <div class="verificacao-input">
+                    <input type="text" id="verificacaoPedido" placeholder="Digite ou escaneie o código do pedido" autofocus>
+                    <button id="btnBuscarVerificacao" class="btn" disabled><i class="fas fa-search"></i> Buscar</button>
+                    <button id="btnLimparVerificacao" class="btn voltar"><i class="fas fa-times"></i> Limpar</button>
+                </div>
+                
+                <div class="verificacao-status" id="verificacaoStatus">Aguardando autenticação...</div>
+                
+                <div class="verificacao-resultado">
+                    <div class="verificacao-codigo">—</div>
+                    <div class="verificacao-statusDesc">—</div>
+                </div>
+                
+                <div class="verificacao-lista">
+                    <h2>Pedidos já verificados:</h2>
+                    <ul id="verificacaoListaLidos"></ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Página de Configurações (inicialmente oculta) -->
+        <div id="paginaConfiguracoes" class="hidden">
+            <button id="btnVoltarConfiguracoes" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            
+            <div class="configuracao-header">
+                <h2>Configurações do Sistema</h2>
+            </div>
+            
+            <div class="configuracao-container">
+                <div class="configuracao-opcoes">
+                    <div class="configuracao-item">
+                        <div class="configuracao-info">
+                            <div class="configuracao-titulo">Ocultar opção de cadastro na tela de login</div>
+                            <div class="configuracao-descricao">Quando ativado, os usuários não verão a opção de criar nova conta</div>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" id="toggleOcultarCadastro">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="configuracao-mensagem" id="configMensagemContato">
+                    <i class="fas fa-info-circle"></i> Para alterar esta configuração, entre em contato com o administrador do sistema.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Página de Estoque (inicialmente oculta) -->
+        <div id="paginaEstoque" class="hidden">
+            <button id="btnVoltarEstoque" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            
+            <div class="estoque-header">
+                <h2>Consulta e Atualização de SKUs - Hub Ideris</h2>
+                <button id="btnAtualizarEstoque" class="btn"><i class="fas fa-sync-alt"></i> Atualizar</button>
+            </div>
+            
+            <div class="estoque-container">
+                <div class="estoque-input-row">
+                    <input id="skuInput" type="text" class="estoque-input" placeholder="Digite SKUs separados por vírgula (ex.: 38,46,50)" />
+                    <button id="btnBuscarEstoque" class="btn" disabled><i class="fas fa-search"></i> Buscar</button>
+                    <button id="btnLimparEstoque" class="btn voltar"><i class="fas fa-times"></i> Limpar Lista</button>
+                    <button id="btnAtualizarEstoques" class="btn btn-success"><i class="fas fa-save"></i> Atualizar Estoques</button>
+                </div>
+                <div class="estoque-hint" id="lastSearch">Última pesquisa: —</div>
+                
+                <div class="estoque-status" id="estoqueStatus">Aguardando autenticação...</div>
+                
+                <div class="estoque-table-wrap">
+                    <table class="estoque-table" id="skuTable" aria-label="Lista de SKUs">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Estoque Atual</th>
+                                <th>Atualizar</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/firebase-config.js"></script>
+    <script src="scripts/ideris-api.js"></script>
+    <script src="scripts/app.js"></script>
+</body>
+</html>
