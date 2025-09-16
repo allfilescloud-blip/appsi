@@ -24,25 +24,19 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Replace Firebase environment variables
-        uses: microsoft/variable-substitution@v1
-        with:
-          files: 'scripts/firebase-config.js'
-        env:
-          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
-          FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
-          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
-          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
-          FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
-          FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
-          FIREBASE_MEASUREMENT_ID: ${{ secrets.FIREBASE_MEASUREMENT_ID }}
-
-      - name: Replace Ideris variables
-        uses: microsoft/variable-substitution@v1
-        with:
-          files: 'scripts/ideris-api.js'
-        env:
-          IDERIS_PRIVATE_KEY: ${{ secrets.IDERIS_PRIVATE_KEY }}
+      - name: Replace environment variables
+        run: |
+          # Substituir variáveis no firebase-config.js
+          sed -i "s|%%FIREBASE_API_KEY%%|${{ secrets.FIREBASE_API_KEY }}|g" scripts/firebase-config.js
+          sed -i "s|%%FIREBASE_AUTH_DOMAIN%%|${{ secrets.FIREBASE_AUTH_DOMAIN }}|g" scripts/firebase-config.js
+          sed -i "s|%%FIREBASE_PROJECT_ID%%|${{ secrets.FIREBASE_PROJECT_ID }}|g" scripts/firebase-config.js
+          sed -i "s|%%FIREBASE_STORAGE_BUCKET%%|${{ secrets.FIREBASE_STORAGE_BUCKET }}|g" scripts/firebase-config.js
+          sed -i "s|%%FIREBASE_MESSAGING_SENDER_ID%%|${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}|g" scripts/firebase-config.js
+          sed -i "s|%%FIREBASE_APP_ID%%|${{ secrets.FIREBASE_APP_ID }}|g" scripts/firebase-config.js
+          sed -i "s|%%FIREBASE_MEASUREMENT_ID%%|${{ secrets.FIREBASE_MEASUREMENT_ID }}|g" scripts/firebase-config.js
+          
+          # Substituir variáveis no ideris-api.js
+          sed -i "s|%%IDERIS_PRIVATE_KEY%%|${{ secrets.IDERIS_PRIVATE_KEY }}|g" scripts/ideris-api.js
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
