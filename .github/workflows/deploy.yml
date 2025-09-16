@@ -2,13 +2,17 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -17,25 +21,51 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Replace environment variables
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install replace utility
+        run: npm install -g replace
+
+      - name: Replace Firebase configuration
         run: |
-          # Substituir variáveis no firebase-config.js
-          sed -i "s|%%FIREBASE_API_KEY%%|${{ secrets.FIREBASE_API_KEY }}|g" scripts/firebase-config.js
-          sed -i "s|%%FIREBASE_AUTH_DOMAIN%%|${{ secrets.FIREBASE_AUTH_DOMAIN }}|g" scripts/firebase-config.js
-          sed -i "s|%%FIREBASE_PROJECT_ID%%|${{ secrets.FIREBASE_PROJECT_ID }}|g" scripts/firebase-config.js
-          sed -i "s|%%FIREBASE_STORAGE_BUCKET%%|${{ secrets.FIREBASE_STORAGE_BUCKET }}|g" scripts/firebase-config.js
-          sed -i "s|%%FIREBASE_MESSAGING_SENDER_ID%%|${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}|g" scripts/firebase-config.js
-          sed -i "s|%%FIREBASE_APP_ID%%|${{ secrets.FIREBASE_APP_ID }}|g" scripts/firebase-config.js
-          sed -i "s|%%FIREBASE_MEASUREMENT_ID%%|${{ secrets.FIREBASE_MEASUREMENT_ID }}|g" scripts/firebase-config.js
+          replace "FIREBASE_API_KEY" "${{ secrets.FIREBASE_API_KEY }}" scripts/firebase-config.js
+          replace "FIREBASE_AUTH_DOMAIN" "${{ secrets.FIREBASE_AUTH_DOMAIN }}" scripts/firebase-config.js
+          replace "FIREBASE_PROJECT_ID" "${{ secrets.FIREBASE_PROJECT_ID }}" scripts/firebase-config.js
+          replace "FIREBASE_STORAGE_BUCKET" "${{ secrets.FIREBASE_STORAGE_BUCKET }}" scripts/firebase-config.js
+          replace "FIREBASE_MESSAGING_SENDER_ID" "${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}" scripts/firebase-config.js
+          replace "FIREBASE_APP_ID" "${{ secrets.FIREBASE_APP_ID }}" scripts/firebase-config.js
+          replace "FIREBASE_MEASUREMENT_ID" "${{ secrets.FIREBASE_MEASUREMENT_ID }}" scripts/firebase-config.js
+
+      - name: Replace Ideris Private Key
+        run: |
+          replace "IDERIS_PRIVATE_KEY" "${{ secrets.IDERIS_PRIVATE_KEY }}" scripts/ideris-api.js
+          replace "IDERIS_PRIVATE_KEY" "${{ secrets.IDERIS_PRIVATE_KEY }}" scripts/ideris-api.js
+          replace "IDERIS_PRIVATE_KEY" "${{ secrets.IDERIS_PRIVATE_KEY }}" scripts/ideris-api.js
+
+      - name: Verify replacements
+        run: |
+          echo "=== Verificando substituições ==="
           
-          # Substituir variáveis no ideris-api.js
-          sed -i "s|%%IDERIS_PRIVATE_KEY%%|${{ secrets.IDERIS_PRIVATE_KEY }}|g" scripts/ideris-api.js
+          # Verificar Firebase
+          if grep -q "FIREBASE_API_KEY" scripts/firebase-config.js; then
+            echo "❌ ERRO: Firebase API Key não foi substituída!"
+            exit 1
+          else
+            echo "✅ Firebase API Key substituída com sucesso"
+          fi
           
-          # Debug: verificar se substituiu corretamente
-          echo "Verificando substituição no firebase-config.js:"
-          grep "apiKey:" scripts/firebase-config.js
-          echo "Verificando substituição no ideris-api.js:"
-          grep "PRIVATE_KEY" scripts/ideris-api.js
+          # Verificar Ideris
+          if grep -q "IDERIS_PRIVATE_KEY" scripts/app.js; then
+            echo "❌ ERRO: Ideris Private Key não foi substituída!"
+            exit 1
+          else
+            echo "✅ Ideris Private Key substituída com sucesso"
+          fi
+          
+          echo "=== Todas as substituições verificadas ==="
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -43,7 +73,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: .
 
   deploy:
     environment:
@@ -54,4 +84,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v3
+        uses: actions/deploy-pages@v4
