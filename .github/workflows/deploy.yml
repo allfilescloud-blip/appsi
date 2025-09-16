@@ -38,31 +38,6 @@ jobs:
           # Substituir variáveis no ideris-api.js
           sed -i "s|%%IDERIS_PRIVATE_KEY%%|${{ secrets.IDERIS_PRIVATE_KEY }}|g" scripts/ideris-api.js
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: |
-          # Create a simple package.json if it doesn't exist
-          if [ ! -f package.json ]; then
-            echo '{
-              "name": "sistema-atendimentos",
-              "version": "1.0.0",
-              "description": "Sistema de atendimentos com Firebase e Ideris",
-              "main": "index.html",
-              "scripts": {
-                "test": "echo \"Error: no test specified\" && exit 1"
-              },
-              "keywords": [],
-              "author": "",
-              "license": "MIT"
-            }' > package.json
-          fi
-          npm install
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
