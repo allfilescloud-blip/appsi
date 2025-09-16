@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -10,19 +10,12 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
 
       - name: Replace environment variables
         run: |
@@ -37,11 +30,20 @@ jobs:
           
           # Substituir variáveis no ideris-api.js
           sed -i "s|%%IDERIS_PRIVATE_KEY%%|${{ secrets.IDERIS_PRIVATE_KEY }}|g" scripts/ideris-api.js
+          
+          # Debug: verificar se substituiu corretamente
+          echo "Verificando substituição no firebase-config.js:"
+          grep "apiKey:" scripts/firebase-config.js
+          echo "Verificando substituição no ideris-api.js:"
+          grep "PRIVATE_KEY" scripts/ideris-api.js
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v2
         with:
-          path: .
+          path: '.'
 
   deploy:
     environment:
@@ -52,4 +54,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v3
+        uses: actions/deploy-pages@v2
