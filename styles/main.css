@@ -1607,3 +1607,62 @@ input:checked + .slider:before {
         width: 120px;
     }
 }
+
+/* Estilos para a tabela de estoque - Melhorias */
+.estoque-table td:nth-child(2) {
+    text-align: left;
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.estoque-table td[data-label="Produto"] {
+    font-size: 14px;
+    color: #475569;
+}
+
+/* Responsivo: ajuste para mobile */
+@media (max-width: 720px) {
+    .estoque-table tbody td[data-label="Produto"]::before {
+        content: "Produto: ";
+        font-weight: 600;
+    }
+    
+    .estoque-table tbody td[data-label="Produto"] {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+/* Estilos para a alteração de tipo */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    background-color: #3b82f6;
+    color: white;
+    margin-left: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.status-badge i {
+    font-size: 10px;
+}
+
+/* Para o select de tipos */
+#novoTipo {
+    padding: 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+#novoTipo:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}

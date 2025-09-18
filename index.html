@@ -198,13 +198,19 @@
                     <label for="filtroTipo">Tipo:</label>
                     <select id="filtroTipo">
                         <option value="">Todos os tipos</option>
-                        <option value="Devolução">Devolução</option>
+                        <option value="Devolucao">Devolução</option>
                         <option value="Reembolso">Reembolso</option>
                         <option value="Fraude">Fraude</option>
                         <option value="Contatar MarketPlace">Contatar MarketPlace</option>
                         <option value="Contatar Cliente">Contatar Cliente</option>
                         <option value="Interno">Interno</option>
                         <option value="Defeito">Defeito</option>
+						<option value="Prejuizo">Prejuízo</option>
+						<option value="Atraso na entrega">Atraso na entrega</option>
+						<option value="Produto errado">Produto errado</option>
+						<option value="Faltou item">Faltou item</option>
+						<option value="Duvida tecnica">Dúvida técnica</option>
+						<option value="Cancelamento">Cancelamento</option>
                     </select>
                 </div>
                 
@@ -214,7 +220,6 @@
                         <option value="">Todos os marketplaces</option>
                         <option value="Mercado Livre">Mercado Livre</option>
                         <option value="Amazon">Amazon</option>
-                        <option value="N/A">N/A</option>
                     </select>
                 </div>
                 
@@ -295,14 +300,20 @@
                     <div class="form-group">
                         <label for="tipoChamado">Tipo de Chamado:</label>
                         <select id="tipoChamado" required>
-                            <option value="">Selecione o tipo</option>
-                            <option value="Devolução">Devolução</option>
-                            <option value="Reembolso">Reembolso</option>
-                            <option value="Fraude">Fraude</option>
-                            <option value="Contatar MarketPlace">Contatar MarketPlace</option>
-                            <option value="Contatar Cliente">Contatar Cliente</option>
-                            <option value="Interno">Interno</option>
-                            <option value="Defeito">Defeito</option>
+							<option value="">Todos os tipos</option>
+							<option value="Devolucao">Devolução</option>
+							<option value="Reembolso">Reembolso</option>
+							<option value="Fraude">Fraude</option>
+							<option value="Contatar MarketPlace">Contatar MarketPlace</option>
+							<option value="Contatar Cliente">Contatar Cliente</option>
+							<option value="Interno">Interno</option>
+							<option value="Defeito">Defeito</option>
+							<option value="Prejuizo">Prejuízo</option>
+							<option value="Atraso na entrega">Atraso na entrega</option>
+							<option value="Produto errado">Produto errado</option>
+							<option value="Faltou item">Faltou item</option>
+							<option value="Duvida tecnica">Dúvida técnica</option>
+							<option value="Cancelamento">Cancelamento</option>
                         </select>
                     </div>
                     
@@ -384,10 +395,40 @@
 							</button>
 						</div>
 					</div>
-                    <div class="info-item">
-                        <div class="info-label">Tipo</div>
-                        <div id="detalhesTipo"></div>
-                    </div>
+					<!-- Seção do Tipo -->
+					<div class="info-item">
+						<div class="info-label">Tipo</div>
+						<div id="detalhesTipoContainer">
+							<span id="detalhesTipo"></span>
+							<button id="btnAlterarTipo" class="btn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px;">
+								<i class="fas fa-edit"></i> Alterar
+							</button>
+						</div>
+						<div id="alterarTipoForm" class="hidden" style="margin-top: 10px;">
+							<select id="novoTipo" style="width: 200px; margin-right: 10px;">
+								<option value="">Todos os tipos</option>
+								<option value="Devolucao">Devolução</option>
+								<option value="Reembolso">Reembolso</option>
+								<option value="Fraude">Fraude</option>
+								<option value="Contatar MarketPlace">Contatar MarketPlace</option>
+								<option value="Contatar Cliente">Contatar Cliente</option>
+								<option value="Interno">Interno</option>
+								<option value="Defeito">Defeito</option>
+								<option value="Prejuizo">Prejuízo</option>
+								<option value="Atraso na entrega">Atraso na entrega</option>
+								<option value="Produto errado">Produto errado</option>
+								<option value="Faltou item">Faltou item</option>
+								<option value="Duvida tecnica">Dúvida técnica</option>
+								<option value="Cancelamento">Cancelamento</option>
+							</select>
+							<button id="btnConfirmarTipo" class="btn btn-success" style="padding: 4px 8px; font-size: 12px;">
+								<i class="fas fa-check"></i> Confirmar
+							</button>
+							<button id="btnCancelarTipo" class="btn voltar" style="padding: 4px 8px; font-size: 12px;">
+								<i class="fas fa-times"></i> Cancelar
+							</button>
+						</div>
+					</div>
                     <div class="info-item">
                         <div class="info-label">Marketplace</div>
                         <div id="detalhesMarketplace"></div>
@@ -533,16 +574,17 @@
                 <div class="estoque-status" id="estoqueStatus">Aguardando autenticação...</div>
                 
                 <div class="estoque-table-wrap">
-                    <table class="estoque-table" id="skuTable" aria-label="Lista de SKUs">
-                        <thead>
-                            <tr>
-                                <th>SKU</th>
-                                <th>Estoque Atual</th>
-                                <th>Atualizar</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
+					<table class="estoque-table" id="skuTable" aria-label="Lista de SKUs">
+						<thead>
+							<tr>
+								<th>SKU</th>
+								<th>Produto</th> <!-- NOVA COLUNA -->
+								<th>Estoque Atual</th>
+								<th>Atualizar</th>
+							</tr>
+						</thead>
+						<tbody></tbody>
+					</table>
                 </div>
             </div>
         </div>

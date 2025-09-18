@@ -903,17 +903,6 @@ formChamado.addEventListener('submit', async function(e) {
 // Abrir detalhes do chamado
 async function abrirDetalhesChamado(id) {
     try {
-        // Resetar estado de alteração
-        responsavelAlterado = false;
-        document.getElementById('alterarResponsavelForm').classList.add('hidden');
-        document.getElementById('btnAlterarResponsavel').classList.remove('hidden');
-        
-        // Remover badge de alteração se existir
-        const badge = document.querySelector('#detalhesResponsavelContainer .status');
-        if (badge && badge.textContent === 'Alterado') {
-            badge.remove();
-        }
-        
         const doc = await db.collection('chamados').doc(id).get();
         
         if (!doc.exists) {
@@ -933,9 +922,29 @@ async function abrirDetalhesChamado(id) {
         document.getElementById('detalhesData').textContent = new Date(chamadoAtual.dataAbertura).toLocaleString('pt-BR');
         document.getElementById('detalhesDescricao').textContent = chamadoAtual.descricao;
         
-        // Verificar se o responsável já foi alterado anteriormente
-        // Podemos verificar se há uma interação de alteração de responsável				
+        // REMOVER BADGES EXISTENTES
+        const responsavelContainer = document.getElementById('detalhesResponsavelContainer');
+        const tipoContainer = document.getElementById('detalhesTipoContainer');
+        
+        // Remover badges antigos
+        const badgesResponsavel = responsavelContainer.querySelectorAll('.status, .status-badge');
+        badgesResponsavel.forEach(badge => badge.remove());
+        
+        const badgesTipo = tipoContainer.querySelectorAll('.status, .status-badge');
+        badgesTipo.forEach(badge => badge.remove());
+        
+        // RESETAR FORMULÁRIOS
+        document.getElementById('alterarResponsavelForm').classList.add('hidden');
+        document.getElementById('btnAlterarResponsavel').classList.remove('hidden');
+        document.getElementById('alterarTipoForm').classList.add('hidden');
+        document.getElementById('btnAlterarTipo').classList.remove('hidden');
+        
+        // VERIFICAR ALTERAÇÕES PREVIAS
+        let responsavelAlterado = false;
+        let tipoAlterado = false;
+        
         if (chamadoAtual.interacoes) {
+            // Verificar alteração de responsável
             const alteracaoResponsavel = chamadoAtual.interacoes.find(i => 
                 i.mensagem && i.mensagem.includes('Responsável alterado de')
             );
@@ -943,16 +952,50 @@ async function abrirDetalhesChamado(id) {
             if (alteracaoResponsavel) {
                 responsavelAlterado = true;
                 document.getElementById('btnAlterarResponsavel').classList.add('hidden');
-                
-                // Adicionar badge indicando que foi alterado
-                const container = document.getElementById('detalhesResponsavelContainer');
-                const badge = document.createElement('span');
-                badge.className = 'status';
-                badge.style.marginLeft = '10px';
-                badge.style.backgroundColor = '#3b82f6';
-                badge.textContent = 'Alterado';
-                container.appendChild(badge);
             }
+            
+            // Verificar alteração de tipo
+            const alteracaoTipo = chamadoAtual.interacoes.find(i => 
+                i.mensagem && i.mensagem.includes('Tipo alterado de')
+            );
+            
+            if (alteracaoTipo) {
+                tipoAlterado = true;
+                document.getElementById('btnAlterarTipo').classList.add('hidden');
+            }
+        }
+        
+        // ARMAZENAR ESTADOS NO PRÓPRIO CHAMADO - CORRIGIDO
+        chamadoAtual.responsavelAlterado = responsavelAlterado;
+        chamadoAtual.tipoAlterado = tipoAlterado;
+        
+        // ADICIONAR BADGES APENAS SE HOUVER ALTERAÇÃO - CORRIGIDO
+        if (responsavelAlterado) {
+            const badge = document.createElement('span');
+            badge.className = 'status-badge';
+            badge.innerHTML = '<i class="fas fa-lock"></i> Alterado';
+            badge.style.marginLeft = '10px';
+            badge.style.padding = '4px 8px';
+            badge.style.backgroundColor = '#3b82f6';
+            badge.style.color = 'white';
+            badge.style.borderRadius = '12px';
+            badge.style.fontSize = '11px';
+            badge.style.fontWeight = '600';
+            responsavelContainer.appendChild(badge);
+        }
+        
+        if (tipoAlterado) {
+            const badge = document.createElement('span');
+            badge.className = 'status-badge';
+            badge.innerHTML = '<i class="fas fa-lock"></i> Alterado';
+            badge.style.marginLeft = '10px';
+            badge.style.padding = '4px 8px';
+            badge.style.backgroundColor = '#3b82f6';
+            badge.style.color = 'white';
+            badge.style.borderRadius = '12px';
+            badge.style.fontSize = '11px';
+            badge.style.fontWeight = '600';
+            tipoContainer.appendChild(badge);
         }
         
         // Carregar anexos
@@ -1617,9 +1660,151 @@ toggleOcultarCadastro.addEventListener('change', function() {
     }
 });
 
+// ============================================
+// FUNÇÕES PARA ALTERAÇÃO DO TIPO DE CHAMADO
+// ============================================
+
+/**
+ * Limpa a interface de alteração de tipo
+ */
+function limparInterfaceAlteracaoTipo() {
+    document.getElementById('alterarTipoForm').classList.add('hidden');
+    document.getElementById('btnAlterarTipo').classList.remove('hidden');
+    
+    // Remove badges existentes
+    const container = document.getElementById('detalhesTipoContainer');
+    const badges = container.querySelectorAll('.status, .status-badge');
+    badges.forEach(badge => badge.remove());
+}
+
+/**
+ * Mostra o badge de "Alterado" no tipo
+ */
+function mostrarBadgeTipoAlterado() {
+    const container = document.getElementById('detalhesTipoContainer');
+    
+    // Remove badge existente se houver
+    const badges = container.querySelectorAll('.status, .status-badge');
+    badges.forEach(badge => badge.remove());
+    
+    const badge = document.createElement('span');
+    badge.className = 'status-badge';
+    badge.innerHTML = '<i class="fas fa-lock"></i> Alterado';
+    badge.style.marginLeft = '10px';
+    badge.style.padding = '4px 8px';
+    badge.style.backgroundColor = '#3b82f6';
+    badge.style.color = 'white';
+    badge.style.borderRadius = '12px';
+    badge.style.fontSize = '11px';
+    badge.style.fontWeight = '600';
+    
+    container.appendChild(badge);
+    
+    // Atualizar o estado no chamado atual
+    chamadoAtual.tipoAlterado = true;
+}
+
+/**
+ * Preenche o select de tipos
+ */
+function preencherSelectTipos() {
+    const select = document.getElementById('novoTipo');
+    select.innerHTML = '<option value="">Selecione o tipo</option>';
+    
+    const tipos = [
+        'Devolucao', 'Reembolso', 'Fraude', 'Contatar MarketPlace',
+        'Contatar Cliente', 'Interno', 'Defeito', 'Prejuizo',
+        'Atraso na entrega', 'Produto errado', 'Faltou item',
+        'Duvida tecnica', 'Cancelamento'
+    ];
+    
+    tipos.forEach(tipo => {
+        const option = document.createElement('option');
+        option.value = tipo;
+        option.textContent = tipo;
+        select.appendChild(option);
+    });
+    
+    // Selecionar o tipo atual
+    select.value = chamadoAtual.tipo;
+}
+
+// ============================================
+// EVENT LISTENERS PARA ALTERAÇÃO DO TIPO
+// ============================================
+
+document.getElementById('btnAlterarTipo').addEventListener('click', function() {
+    if (chamadoAtual.tipoAlterado) {
+        showToast('O tipo já foi alterado uma vez e não pode ser modificado novamente.', 'warning');
+        return;
+    }
+    
+    document.getElementById('alterarTipoForm').classList.remove('hidden');
+    document.getElementById('btnAlterarTipo').classList.add('hidden');
+    preencherSelectTipos();
+});
+
+document.getElementById('btnCancelarTipo').addEventListener('click', function() {
+    limparInterfaceAlteracaoTipo();
+});
+
+document.getElementById('btnConfirmarTipo').addEventListener('click', async function() {
+    const novoTipo = document.getElementById('novoTipo').value;
+    
+    if (!novoTipo) {
+        showToast('Selecione um tipo', 'warning');
+        return;
+    }
+    
+    if (novoTipo === chamadoAtual.tipo) {
+        showToast('O tipo é o mesmo atual', 'info');
+        limparInterfaceAlteracaoTipo();
+        return;
+    }
+    
+    try {
+        // Atualizar no Firebase
+        await db.collection('chamados').doc(chamadoAtual.id).update({
+            tipo: novoTipo,
+            tipoAlterado: true // Adicionar campo para persistência
+        });
+        
+        // Adicionar interação de sistema
+        const interacaoAlteracao = {
+            data: new Date().toISOString(),
+            autor: 'Sistema',
+            mensagem: `Tipo alterado de "${chamadoAtual.tipo}" para "${novoTipo}" por ${userData.nome}.`
+        };
+        
+        await db.collection('chamados').doc(chamadoAtual.id).update({
+            interacoes: firebase.firestore.FieldValue.arrayUnion(interacaoAlteracao)
+        });
+        
+        // Atualizar a exibição
+        document.getElementById('detalhesTipo').textContent = novoTipo;
+        
+        // Ocultar formulário e mostrar badge
+        limparInterfaceAlteracaoTipo();
+        mostrarBadgeTipoAlterado();
+        
+        // Atualizar o chamado atual
+        chamadoAtual.tipo = novoTipo;
+        chamadoAtual.tipoAlterado = true;
+        
+        // Esconder o botão de alterar tipo permanentemente
+        document.getElementById('btnAlterarTipo').classList.add('hidden');
+        
+        showToast('Tipo alterado com sucesso!', 'success');
+    } catch (error) {
+        console.error("Erro ao alterar tipo:", error);
+        showToast('Erro ao alterar tipo. Tente novamente.', 'error');
+    }
+});
+
 // Adicione estes event listeners no final do arquivo JavaScript, antes do DOMContentLoaded
+// Event Listener para alterar responsável - MODIFICADO
 document.getElementById('btnAlterarResponsavel').addEventListener('click', function() {
-    if (responsavelAlterado) {
+    if (chamadoAtual.responsavelAlterado) {
         showToast('O responsável já foi alterado uma vez e não pode ser modificado novamente.', 'warning');
         return;
     }
@@ -1627,7 +1812,7 @@ document.getElementById('btnAlterarResponsavel').addEventListener('click', funct
     document.getElementById('alterarResponsavelForm').classList.remove('hidden');
     document.getElementById('btnAlterarResponsavel').classList.add('hidden');
     
-    // Preencher o select com os usuários disponíveis
+    // Preencher o select with os usuários disponíveis
     const select = document.getElementById('novoResponsavel');
     select.innerHTML = '<option value="">Selecione um responsável</option>';
     listaUsuarios.forEach(usuario => {
@@ -1654,7 +1839,8 @@ document.getElementById('btnConfirmarResponsavel').addEventListener('click', asy
     try {
         // Atualizar no Firebase
         await db.collection('chamados').doc(chamadoAtual.id).update({
-            responsavel: novoResponsavel
+            responsavel: novoResponsavel,
+            responsavelAlterado: true // Adicionar campo para persistência
         });
         
         // Adicionar interação de sistema
@@ -1676,15 +1862,20 @@ document.getElementById('btnConfirmarResponsavel').addEventListener('click', asy
         document.getElementById('btnAlterarResponsavel').classList.add('hidden');
         
         // Marcar que o responsável já foi alterado
-        responsavelAlterado = true;
+        chamadoAtual.responsavelAlterado = true;
         
         // Adicionar badge indicando que foi alterado
         const container = document.getElementById('detalhesResponsavelContainer');
         const badge = document.createElement('span');
-        badge.className = 'status';
+        badge.className = 'status-badge';
+        badge.innerHTML = '<i class="fas fa-lock"></i> Alterado';
         badge.style.marginLeft = '10px';
+        badge.style.padding = '4px 8px';
         badge.style.backgroundColor = '#3b82f6';
-        badge.textContent = 'Alterado';
+        badge.style.color = 'white';
+        badge.style.borderRadius = '12px';
+        badge.style.fontSize = '11px';
+        badge.style.fontWeight = '600';
         container.appendChild(badge);
         
         showToast('Responsável alterado com sucesso!', 'success');
@@ -1692,7 +1883,7 @@ document.getElementById('btnConfirmarResponsavel').addEventListener('click', asy
         console.error("Erro ao alterar responsável:", error);
         showToast('Erro ao alterar responsável. Tente novamente.', 'error');
     }
-});		
+});
 
 // Aplicar configuração ao carregar a página
 document.addEventListener('DOMContentLoaded', function() {
