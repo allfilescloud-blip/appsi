@@ -573,7 +573,7 @@ tr:hover {
 
 /* CORES DOS STATUS ALTERADAS */
 .aberto {
-    background-color: #10b981; /* Verde */
+    background-color: #ef4444; /* Vermelho */ /*#10b981 Verde */
     color: white;
 }
 
@@ -588,7 +588,7 @@ tr:hover {
 }
 
 .fechado {
-    background-color: #ef4444; /* Vermelho */
+    background-color: #10b981 /* Verde */ /*#ef4444; Vermelho */
     color: white;
 }
 
