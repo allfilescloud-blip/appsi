@@ -216,10 +216,12 @@ function renderRowsEstoque(items) {
         const stockTotal = Array.isArray(item.stocks)
             ? item.stocks.reduce((sum, s) => sum + (Number(s?.currentStock) || 0), 0)
             : 0;
+		const productName = item.title || item.descricao || item.nome || "Nome não disponível";
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td data-label="SKU">${sku}</td>
+            <td data-label="Produto">${productName}</td>
             <td data-label="Estoque Atual" class="stock">${stockTotal}</td>
             <td data-label="Atualizar"><input class="qty-input" type="number" min="0" inputmode="numeric" placeholder="Novo" /></td>
         `;
@@ -337,6 +339,7 @@ async function atualizarEstoques() {
 }
 
 // Função para buscar pedido na verificação
+// Função para buscar pedido na verificação - MODIFICADA
 async function buscarPedidoVerificacao() {
     const codigo = verificacaoPedido.value.trim();
     if (!codigo) {
@@ -344,6 +347,14 @@ async function buscarPedidoVerificacao() {
         verificacaoPedido.focus();
         return;
     }
+    
+    // Modo de verificação local de duplicados
+    if (verificarApenasDuplicados) {
+        verificarDuplicadosLocalmente(codigo);
+        return;
+    }
+    
+    // Modo normal (consulta API)
     if (!jwtToken) {
         verificacaoStatus.textContent = "Token JWT inválido. Tentando autenticar novamente...";
         await loginIderisVerificacao();
@@ -392,38 +403,99 @@ async function buscarPedidoVerificacao() {
     }
 }
 
+// NOVA FUNÇÃO: Verificar duplicados localmente
+function verificarDuplicadosLocalmente(codigo) {
+    const duplicadoCodigo = pedidosVerificados.some(p => p.codigo === codigo);
+    const duplicadoDelivery = pedidosVerificados.find(p => p.deliveryCode && p.deliveryCode !== "—");
+    
+    let statusDescription = "Não duplicado";
+    let deliveryCode = "—";
+    
+    if (duplicadoCodigo) {
+        statusDescription = "Código duplicado";
+    }
+    
+    if (duplicadoDelivery) {
+        deliveryCode = duplicadoDelivery.deliveryCode;
+        statusDescription += deliveryCode ? " + Delivery duplicado" : "";
+    }
+    
+    const statusEl = document.querySelector(".verificacao-statusDesc");
+    document.querySelector(".verificacao-codigo").textContent = codigo;
+    statusEl.textContent = statusDescription;
+    
+    // Aplicar estilo baseado no resultado
+    if (duplicadoCodigo || duplicadoDelivery) {
+        statusEl.className = "verificacao-statusDesc cancelado";
+    } else {
+        statusEl.className = "verificacao-statusDesc";
+        statusEl.style.color = "#10b981";
+    }
+    
+    // Adicionar à lista mesmo se não for duplicado para histórico completo
+    atualizarListaVerificacao(codigo, statusDescription, deliveryCode);
+    
+    verificacaoStatus.textContent = duplicadoCodigo || duplicadoDelivery 
+        ? "Duplicado encontrado localmente!" 
+        : "Nenhum duplicado encontrado.";
+    
+    verificacaoPedido.value = "";
+    verificacaoPedido.focus();
+}
+
 // Variável para contar os itens verificados
 let contadorVerificacao = 0;
 
 // Função para atualizar lista de pedidos verificados
+// Função para atualizar lista de pedidos verificados - MODIFICADA
 function atualizarListaVerificacao(codigo, status, deliveryCode) {
     const duplicadoCodigo = pedidosVerificados.some(p => p.codigo === codigo);
-    const duplicadoDelivery = deliveryCode && pedidosVerificados.some(p => p.deliveryCode === deliveryCode);
+    const duplicadoDelivery = deliveryCode && deliveryCode !== "—" && 
+                             pedidosVerificados.some(p => p.deliveryCode === deliveryCode);
 
-    pedidosVerificados.push({ codigo, status, deliveryCode });
-    
+    pedidosVerificados.push({ 
+        codigo, 
+        status, 
+        deliveryCode,
+        timestamp: new Date().toISOString(),
+        modo: verificarApenasDuplicados ? "local" : "api"
+    });
+
     // Incrementar o contador
     contadorVerificacao++;
 
     const li = document.createElement("li");
+    
+    // Aplicar classes baseadas no tipo de duplicação
     if (duplicadoDelivery) {
         li.className = "verificacao-duplicado-delivery";
+        li.title = "Código de delivery duplicado";
     } else if (duplicadoCodigo) {
         li.className = "verificacao-duplicado";
+        li.title = "Código de pedido duplicado";
     }
-
+    
+    // Adicionar ícone indicando o modo de verificação
+    const modoIcon = verificarApenasDuplicados ? "🔍" : "🌐";
+    
     li.innerHTML = `
         <span class="item-number">${contadorVerificacao}</span>
         <span>
             <strong>${codigo}</strong>
             <span class="verificacao-delivery">(${deliveryCode || "—"})</span>
+            <span class="verificacao-modo">${modoIcon}</span>
         </span>
-        <span class="status${status === "Pagamento cancelado" ? " cancelado" : ""}">${status}</span>
+        <span class="status${status.includes("duplicado") || status === "Pagamento cancelado" ? " cancelado" : ""}">${status}</span>
     `;
+    
     verificacaoListaLidos.insertBefore(li, verificacaoListaLidos.firstChild);
+    
+    // Rolagem automática para o novo item
+    li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 // Função para limpar verificação
+// Função para limpar verificação - MODIFICADA
 function limparVerificacao() {
     verificacaoPedido.value = "";
     document.querySelector(".verificacao-codigo").textContent = "—";
@@ -431,6 +503,10 @@ function limparVerificacao() {
     document.querySelector(".verificacao-statusDesc").className = "verificacao-statusDesc";
     verificacaoStatus.textContent = "Pronto para consultas";
     verificacaoPedido.focus();
+    
+    // Resetar o checkbox de duplicados
+    document.getElementById('verificarDuplicados').checked = false;
+    verificarApenasDuplicados = false;
     
     // Limpar lista de pedidos e array de controle
     pedidosVerificados = [];

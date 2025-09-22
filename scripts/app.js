@@ -136,6 +136,7 @@ let totalTamanhoArquivos = 0;
 let arquivosInteracao = [];
 let totalTamanhoArquivosInteracao = 0;
 let responsavelAlterado = false;
+let verificarApenasDuplicados = false;
 
 // Variáveis para verificação de pedidos
 let pedidosVerificados = [];
@@ -643,6 +644,53 @@ async function carregarAnexos(chamadoId) {
     }
 }
 
+// ============================================
+// CONFIGURAÇÃO DE EVENTOS DE UPLOAD (CORRIGIDOS)
+// ============================================
+
+// Configurar eventos de upload
+fileInput.addEventListener('change', (e) => {
+    adicionarArquivos(Array.from(e.target.files), 'formulario');
+    // Limpar input para permitir selecionar o mesmo arquivo novamente
+    fileInput.value = '';
+});
+
+fileInputInteracao.addEventListener('change', (e) => {
+    adicionarArquivos(Array.from(e.target.files), 'interacao');
+    // Limpar input para permitir selecionar o mesmo arquivo novamente
+    fileInputInteracao.value = '';
+});
+
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    adicionarArquivos(Array.from(e.dataTransfer.files), 'formulario');
+});
+
+uploadAreaInteracao.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadAreaInteracao.classList.add('dragover');
+});
+
+uploadAreaInteracao.addEventListener('dragleave', () => {
+    uploadAreaInteracao.classList.remove('dragover');
+});
+
+uploadAreaInteracao.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadAreaInteracao.classList.remove('dragover');
+    adicionarArquivos(Array.from(e.dataTransfer.files), 'interacao');
+});
+
 // Carregar chamados na tabela a partir do Firebase em tempo real
 function carregarChamadosTempoReal() {
     if (unsubscribeChamados) {
@@ -1149,7 +1197,7 @@ btnAdicionarInteracao.addEventListener('click', async function() {
 btnFinalizarChamado.addEventListener('click', async function() {
     if (!chamadoAtual) return;
     
-    if (confirm('Tem certeza que deseja finalizar este chamado? Esta ação não pode ser desfeita.')) {
+    if (confirm('Tem certeza que deseja finalizar este chamado? Esta ação não pode be desfeita.')) {
         try {
             // Adicionar interação de sistema
             const interacaoFinalizacao = {
@@ -1798,6 +1846,21 @@ document.getElementById('btnConfirmarTipo').addEventListener('click', async func
     } catch (error) {
         console.error("Erro ao alterar tipo:", error);
         showToast('Erro ao alterar tipo. Tente novamente.', 'error');
+    }
+});
+
+// Event listeners (adicionar na seção de eventos)
+document.getElementById('verificarDuplicados').addEventListener('change', function(e) {
+    verificarApenasDuplicados = e.target.checked;
+    
+    if (verificarApenasDuplicados) {
+        verificacaoStatus.textContent = "Modo: Verificação local de duplicados";
+        btnBuscarVerificacao.disabled = false;
+    } else {
+        verificacaoStatus.textContent = "Modo: Consulta completa API Ideris";
+        if (!jwtToken) {
+            btnBuscarVerificacao.disabled = true;
+        }
     }
 });
 
