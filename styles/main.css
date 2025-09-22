@@ -573,7 +573,7 @@ tr:hover {
 
 /* CORES DOS STATUS ALTERADAS */
 .aberto {
-    background-color: #ef4444; /* Vermelho */ /*#10b981 Verde */
+    background-color: #10b981; /* Verde */
     color: white;
 }
 
@@ -588,7 +588,7 @@ tr:hover {
 }
 
 .fechado {
-    background-color: #10b981 /* Verde */ /*#ef4444; Vermelho */
+    background-color: #ef4444; /* Vermelho */
     color: white;
 }
 
@@ -670,7 +670,7 @@ textarea {
     border-left: 4px solid #f59e0b;
 }
 
-/* Upload de arquivos */
+/* Upload de arquivos - ESTILOS CORRIGIDOS */
 .upload-container {
     margin-bottom: 20px;
     position: relative;
@@ -681,14 +681,16 @@ textarea {
     border-radius: 8px;
     padding: 20px;
     text-align: center;
-    transition: border-color 0.3s;
+    transition: all 0.3s ease;
     margin-bottom: 15px;
     position: relative;
+    background: #fafafa;
 }
 
 .upload-area.dragover {
     border-color: #3b82f6;
     background-color: #f0f9ff;
+    transform: scale(1.02);
 }
 
 .upload-icon {
@@ -700,6 +702,7 @@ textarea {
 .upload-text {
     color: #64748b;
     margin-bottom: 15px;
+    font-size: 14px;
 }
 
 .upload-button {
@@ -711,16 +714,21 @@ textarea {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
+    font-size: 14px;
 }
 
 .upload-button:hover {
     background: #e2e8f0;
+    transform: translateY(-1px);
 }
 
 .file-list {
     margin-top: 15px;
     max-height: 200px;
     overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px;
 }
 
 .file-item {
@@ -731,28 +739,40 @@ textarea {
     background: #f8fafc;
     border-radius: 6px;
     margin-bottom: 8px;
+    transition: background-color 0.2s;
+}
+
+.file-item:hover {
+    background: #f1f5f9;
 }
 
 .file-info {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex: 1;
+    min-width: 0;
 }
 
 .file-icon {
     color: #64748b;
     font-size: 16px;
+    flex-shrink: 0;
 }
 
 .file-name {
     font-size: 14px;
     color: #334155;
-    word-break: break-all;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .file-size {
     font-size: 12px;
     color: #64748b;
+    flex-shrink: 0;
 }
 
 .file-remove {
@@ -762,19 +782,31 @@ textarea {
     cursor: pointer;
     font-size: 16px;
     padding: 5px;
+    margin-left: 10px;
+    transition: color 0.2s;
+}
+
+.file-remove:hover {
+    color: #dc2626;
 }
 
 .upload-status {
     margin-top: 10px;
     font-size: 14px;
     color: #64748b;
+    text-align: center;
 }
 
-.upload-error {
-    color: #ef4444;
-    margin-top: 10px;
-    font-size: 14px;
-}
+/*.upload-error {
+/*    color: #ef4444;
+/*    margin-top: 10px;
+/*    font-size: 14px;
+/*    text-align: center;
+/*    padding: 8px;
+/*    background: #fef2f2;
+/*    border-radius: 6px;
+/*    border-left: 4px solid #ef4444;
+/*}
 
 /* Página de detalhes */
 .chamado-header {
@@ -826,6 +858,12 @@ textarea {
     border-radius: 8px;
     padding: 15px;
     border: 1px solid #e2e8f0;
+    transition: transform 0.2s;
+}
+
+.anexo-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .anexo-icon {
@@ -840,12 +878,14 @@ textarea {
     color: #334155;
     margin-bottom: 5px;
     word-break: break-word;
+    text-align: center;
 }
 
 .anexo-size {
     font-size: 12px;
     color: #64748b;
     margin-bottom: 10px;
+    text-align: center;
 }
 
 .anexo-download {
@@ -879,6 +919,7 @@ textarea {
     padding: 12px;
     border-radius: 8px;
     background-color: #f8fafc;
+    border-left: 4px solid #e2e8f0;
 }
 
 .message-header {
@@ -891,10 +932,18 @@ textarea {
 
 .message.system {
     background-color: #dbeafe;
+    border-left-color: #3b82f6;
 }
 
 .message-content {
     line-height: 1.5;
+    color: #334155;
+}
+
+.anexos-interacao {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
 }
 
 .add-interaction {
@@ -1172,6 +1221,25 @@ textarea {
         right: 0;
         width: 100%;
     }
+
+    /* Responsividade para upload */
+    .upload-area {
+        padding: 15px;
+    }
+    
+    .upload-text {
+        font-size: 13px;
+    }
+    
+    .file-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .file-remove {
+        align-self: flex-end;
+    }
 }
 
 /* Estilos para a seção de pedidos Ideris */
@@ -1289,6 +1357,74 @@ textarea {
 
 .verificacao-statusDesc.cancelado {
     color: #ef4444;
+}
+
+/* Estilos para a página de verificação - NOVOS ESTILOS */
+.verificacao-opcoes {
+    margin: 15px 0;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #475569;
+    user-select: none;
+}
+
+.checkbox-container input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.checkmark {
+    position: relative;
+    height: 18px;
+    width: 18px;
+    background-color: #fff;
+    border: 2px solid #cbd5e1;
+    border-radius: 4px;
+    margin-right: 10px;
+    transition: all 0.2s ease;
+}
+
+.checkbox-container input[type="checkbox"]:checked ~ .checkmark {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.checkbox-container input[type="checkbox"]:checked ~ .checkmark:after {
+    display: block;
+}
+
+.checkbox-container .checkmark:after {
+    left: 5px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-container:hover input[type="checkbox"] ~ .checkmark {
+    border-color: #3b82f6;
+}
+
+.checkbox-container input[type="checkbox"]:focus ~ .checkmark {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 /* Estilos para a página de verificação - MODIFICADOS */
@@ -1665,4 +1801,139 @@ input:checked + .slider:before {
     border-color: #3b82f6;
     outline: none;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Animações para upload */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.upload-area.dragover {
+    animation: pulse 0.5s ease-in-out;
+}
+
+/* Estados de foco melhorados */
+.file-input:focus + .upload-button {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Scroll personalizado */
+.file-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.file-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.file-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.file-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Melhorias de acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .upload-area.dragover {
+        animation: none;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .btn {
+        border: 2px solid currentColor;
+    }
+    
+    .upload-area {
+        border: 2px dashed currentColor;
+    }
+    
+    .file-item {
+        border: 1px solid currentColor;
+    }
+}
+
+/* Dark mode support (opcional) */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        color: #e2e8f0;
+    }
+    
+    .dashboard-card,
+    .chart-container,
+    .form-container,
+    .chamado-header,
+    .add-interaction,
+    .verificacao-container,
+    .configuracao-container,
+    .estoque-container {
+        background: linear-gradient(135deg, #334155 0%, #475569 100%);
+        border-color: #64748b;
+        color: #e2e8f0;
+    }
+    
+    .upload-area {
+        background: #334155;
+        border-color: #64748b;
+    }
+}
+
+/* Estilos para o modo de verificação */
+.verificacao-modo {
+    font-size: 12px;
+    margin-left: 5px;
+    opacity: 0.7;
+}
+
+.verificacao-duplicado {
+    background-color: #FDFD96 !important;
+    border-left: 4px solid #f59e0b;
+}
+
+.verificacao-duplicado-delivery {
+    background-color: #FFB6C1 !important;
+    border-left: 4px solid #ef4444;
+}
+
+.verificacao-opcoes {
+    margin: 15px 0;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+/* Tooltip para itens duplicados */
+[title] {
+    position: relative;
+}
+
+[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background: #334155;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
 }
