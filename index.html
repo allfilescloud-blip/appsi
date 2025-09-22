@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Atendimentos</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-	<link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
     <link rel="stylesheet" href="styles/main.css">
     
     <!-- Firebase SDK -->
@@ -85,11 +84,11 @@
                     <div id="loginForm" class="login-form">
                         <div class="form-group">
                             <label for="loginEmail">Email:</label>
-                            <input type="email" id="loginEmail" placeholder="Seu email">
+                            <input type="email" id="loginEmail" placeholder="Seu email" autocomplete="email">
                         </div>
                         <div class="form-group">
                             <label for="loginPassword">Senha:</label>
-                            <input type="password" id="loginPassword" placeholder="Sua senha">
+                            <input type="password" id="loginPassword" placeholder="Sua senha" autocomplete="current-password">
                         </div>
                         <button id="btnFazerLogin" class="btn" style="width: 100%"><i class="fas fa-sign-in-alt"></i> Entrar</button>
                         <div id="loginMessage" class="message message-error hidden"></div>
@@ -99,19 +98,19 @@
                         <h3 class="login-title">Criar Nova Conta</h3>
                         <div class="form-group">
                             <label for="signupName">Nome:</label>
-                            <input type="text" id="signupName" placeholder="Seu nome completo">
+                            <input type="text" id="signupName" placeholder="Seu nome completo" autocomplete="name">
                         </div>
                         <div class="form-group">
                             <label for="signupEmail">Email:</label>
-                            <input type="email" id="signupEmail" placeholder="Seu email">
+                            <input type="email" id="signupEmail" placeholder="Seu email" autocomplete="email">
                         </div>
                         <div class="form-group">
                             <label for="signupPassword">Senha:</label>
-                            <input type="password" id="signupPassword" placeholder="Sua senha (mínimo 6 caracteres)">
+                            <input type="password" id="signupPassword" placeholder="Sua senha (mínimo 6 caracteres)" autocomplete="new-password">
                         </div>
                         <div class="form-group">
                             <label for="signupConfirmPassword">Confirmar Senha:</label>
-                            <input type="password" id="signupConfirmPassword" placeholder="Confirme sua senha">
+                            <input type="password" id="signupConfirmPassword" placeholder="Confirme sua senha" autocomplete="new-password">
                         </div>
                         <button id="btnCriarConta" class="btn" style="width: 100%"><i class="fas fa-user-plus"></i> Criar Conta</button>
                         <div id="signupMessage" class="message"></div>
@@ -205,12 +204,12 @@
                         <option value="Contatar Cliente">Contatar Cliente</option>
                         <option value="Interno">Interno</option>
                         <option value="Defeito">Defeito</option>
-						<option value="Prejuizo">Prejuízo</option>
-						<option value="Atraso na entrega">Atraso na entrega</option>
-						<option value="Produto errado">Produto errado</option>
-						<option value="Faltou item">Faltou item</option>
-						<option value="Duvida tecnica">Dúvida técnica</option>
-						<option value="Cancelamento">Cancelamento</option>
+                        <option value="Prejuizo">Prejuízo</option>
+                        <option value="Atraso na entrega">Atraso na entrega</option>
+                        <option value="Produto errado">Produto errado</option>
+                        <option value="Faltou item">Faltou item</option>
+                        <option value="Duvida tecnica">Dúvida técnica</option>
+                        <option value="Cancelamento">Cancelamento</option>
                     </select>
                 </div>
                 
@@ -300,20 +299,20 @@
                     <div class="form-group">
                         <label for="tipoChamado">Tipo de Chamado:</label>
                         <select id="tipoChamado" required>
-							<option value="">Todos os tipos</option>
-							<option value="Devolucao">Devolução</option>
-							<option value="Reembolso">Reembolso</option>
-							<option value="Fraude">Fraude</option>
-							<option value="Contatar MarketPlace">Contatar MarketPlace</option>
-							<option value="Contatar Cliente">Contatar Cliente</option>
-							<option value="Interno">Interno</option>
-							<option value="Defeito">Defeito</option>
-							<option value="Prejuizo">Prejuízo</option>
-							<option value="Atraso na entrega">Atraso na entrega</option>
-							<option value="Produto errado">Produto errado</option>
-							<option value="Faltou item">Faltou item</option>
-							<option value="Duvida tecnica">Dúvida técnica</option>
-							<option value="Cancelamento">Cancelamento</option>
+                            <option value="">Selecione o tipo</option>
+                            <option value="Devolucao">Devolução</option>
+                            <option value="Reembolso">Reembolso</option>
+                            <option value="Fraude">Fraude</option>
+                            <option value="Contatar MarketPlace">Contatar MarketPlace</option>
+                            <option value="Contatar Cliente">Contatar Cliente</option>
+                            <option value="Interno">Interno</option>
+                            <option value="Defeito">Defeito</option>
+                            <option value="Prejuizo">Prejuízo</option>
+                            <option value="Atraso na entrega">Atraso na entrega</option>
+                            <option value="Produto errado">Produto errado</option>
+                            <option value="Faltou item">Faltou item</option>
+                            <option value="Duvida tecnica">Dúvida técnica</option>
+                            <option value="Cancelamento">Cancelamento</option>
                         </select>
                     </div>
                     
@@ -336,22 +335,22 @@
                         <textarea id="descricao" required></textarea>
                     </div>
                     
-                    <!-- Área de upload de arquivos -->
+                    <!-- Área de upload de arquivos - CORRIGIDA -->
                     <div class="upload-container">
-                        <label>Anexos (Máximo 3 arquivos, 5MB no total):</label>
+                        <label for="fileInput">Anexos (Máximo 3 arquivos, 5MB no total):</label>
                         <div class="upload-area" id="uploadArea">
                             <i class="fas fa-cloud-upload-alt upload-icon"></i>
                             <p class="upload-text">Arraste arquivos aqui ou clique para selecionar</p>
                             <label class="upload-button">
                                 <i class="fas fa-plus"></i> Selecionar Arquivos
-                                <input type="file" id="fileInput" multiple style="display: none;">
+                                <input type="file" id="fileInput" multiple style="display: none;" aria-label="Selecionar arquivos">
                             </label>
                         </div>
                         
                         <div class="file-list" id="fileList"></div>
                         
                         <div class="upload-status" id="uploadStatus"></div>
-                        <div class="upload-error" id="uploadError"></div>
+                        <!-- div class="upload-error" id="uploadError"></div -->
                     </div>
                     
                     <button type="submit" class="btn"><i class="fas fa-save"></i> Salvar Chamado</button>
@@ -374,69 +373,72 @@
                         <div class="info-label">Pedido</div>
                         <div id="detalhesPedido"></div>
                     </div>
-					<!-- Na página de detalhes, modifique a seção do responsável: -->
-					<div class="info-item">
-						<div class="info-label">Responsável</div>
-						<div id="detalhesResponsavelContainer">
-							<span id="detalhesResponsavel"></span>
-							<button id="btnAlterarResponsavel" class="btn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px;">
-								<i class="fas fa-user-edit"></i> Alterar
-							</button>
-						</div>
-						<div id="alterarResponsavelForm" class="hidden" style="margin-top: 10px;">
-							<select id="novoResponsavel" style="width: 200px; margin-right: 10px;">
-								<option value="">Selecione um responsável</option>
-							</select>
-							<button id="btnConfirmarResponsavel" class="btn btn-success" style="padding: 4px 8px; font-size: 12px;">
-								<i class="fas fa-check"></i> Confirmar
-							</button>
-							<button id="btnCancelarResponsavel" class="btn voltar" style="padding: 4px 8px; font-size: 12px;">
-								<i class="fas fa-times"></i> Cancelar
-							</button>
-						</div>
-					</div>
-					<!-- Seção do Tipo -->
-					<div class="info-item">
-						<div class="info-label">Tipo</div>
-						<div id="detalhesTipoContainer">
-							<span id="detalhesTipo"></span>
-							<button id="btnAlterarTipo" class="btn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px;">
-								<i class="fas fa-edit"></i> Alterar
-							</button>
-						</div>
-						<div id="alterarTipoForm" class="hidden" style="margin-top: 10px;">
-							<select id="novoTipo" style="width: 200px; margin-right: 10px;">
-								<option value="">Todos os tipos</option>
-								<option value="Devolucao">Devolução</option>
-								<option value="Reembolso">Reembolso</option>
-								<option value="Fraude">Fraude</option>
-								<option value="Contatar MarketPlace">Contatar MarketPlace</option>
-								<option value="Contatar Cliente">Contatar Cliente</option>
-								<option value="Interno">Interno</option>
-								<option value="Defeito">Defeito</option>
-								<option value="Prejuizo">Prejuízo</option>
-								<option value="Atraso na entrega">Atraso na entrega</option>
-								<option value="Produto errado">Produto errado</option>
-								<option value="Faltou item">Faltou item</option>
-								<option value="Duvida tecnica">Dúvida técnica</option>
-								<option value="Cancelamento">Cancelamento</option>
-							</select>
-							<button id="btnConfirmarTipo" class="btn btn-success" style="padding: 4px 8px; font-size: 12px;">
-								<i class="fas fa-check"></i> Confirmar
-							</button>
-							<button id="btnCancelarTipo" class="btn voltar" style="padding: 4px 8px; font-size: 12px;">
-								<i class="fas fa-times"></i> Cancelar
-							</button>
-						</div>
-					</div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Responsável</div>
+                        <div id="detalhesResponsavelContainer">
+                            <span id="detalhesResponsavel"></span>
+                            <button id="btnAlterarResponsavel" class="btn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px;">
+                                <i class="fas fa-user-edit"></i> Alterar
+                            </button>
+                        </div>
+                        <div id="alterarResponsavelForm" class="hidden" style="margin-top: 10px;">
+                            <select id="novoResponsavel" style="width: 200px; margin-right: 10px;">
+                                <option value="">Selecione um responsável</option>
+                            </select>
+                            <button id="btnConfirmarResponsavel" class="btn btn-success" style="padding: 4px 8px; font-size: 12px;">
+                                <i class="fas fa-check"></i> Confirmar
+                            </button>
+                            <button id="btnCancelarResponsavel" class="btn voltar" style="padding: 4px 8px; font-size: 12px;">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">Tipo</div>
+                        <div id="detalhesTipoContainer">
+                            <span id="detalhesTipo"></span>
+                            <button id="btnAlterarTipo" class="btn" style="margin-left: 10px; padding: 4px 8px; font-size: 12px;">
+                                <i class="fas fa-edit"></i> Alterar
+                            </button>
+                        </div>
+                        <div id="alterarTipoForm" class="hidden" style="margin-top: 10px;">
+                            <select id="novoTipo" style="width: 200px; margin-right: 10px;">
+                                <option value="">Selecione o tipo</option>
+                                <option value="Devolucao">Devolução</option>
+                                <option value="Reembolso">Reembolso</option>
+                                <option value="Fraude">Fraude</option>
+                                <option value="Contatar MarketPlace">Contatar MarketPlace</option>
+                                <option value="Contatar Cliente">Contatar Cliente</option>
+                                <option value="Interno">Interno</option>
+                                <option value="Defeito">Defeito</option>
+                                <option value="Prejuizo">Prejuízo</option>
+                                <option value="Atraso na entrega">Atraso na entrega</option>
+                                <option value="Produto errado">Produto errado</option>
+                                <option value="Faltou item">Faltou item</option>
+                                <option value="Duvida tecnica">Dúvida técnica</option>
+                                <option value="Cancelamento">Cancelamento</option>
+                            </select>
+                            <button id="btnConfirmarTipo" class="btn btn-success" style="padding: 4px 8px; font-size: 12px;">
+                                <i class="fas fa-check"></i> Confirmar
+                            </button>
+                            <button id="btnCancelarTipo" class="btn voltar" style="padding: 4px 8px; font-size: 12px;">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                        </div>
+                    </div>
+                    
                     <div class="info-item">
                         <div class="info-label">Marketplace</div>
                         <div id="detalhesMarketplace"></div>
                     </div>
+                    
                     <div class="info-item">
                         <div class="info-label">Assunto</div>
                         <div id="detalhesAssunto"></div>
                     </div>
+                    
                     <div class="info-item">
                         <div class="info-label">Data de Abertura</div>
                         <div id="detalhesData"></div>
@@ -468,15 +470,15 @@
                     <textarea id="novaInteracao" placeholder="Digite sua mensagem..."></textarea>
                 </div>
                 
-                <!-- Área de upload de arquivos para interações -->
+                <!-- Área de upload de arquivos para interações - CORRIGIDA -->
                 <div class="upload-container">
-                    <label>Anexos para esta interação (Máximo 3 arquivos, 5MB no total):</label>
+                    <label for="fileInputInteracao">Anexos para esta interação (Máximo 3 arquivos, 5MB no total):</label>
                     <div class="upload-area" id="uploadAreaInteracao">
                         <i class="fas fa-cloud-upload-alt upload-icon"></i>
                         <p class="upload-text">Arraste arquivos aqui ou clique para selecionar</p>
                         <label class="upload-button">
                             <i class="fas fa-plus"></i> Selecionar Arquivos
-                            <input type="file" id="fileInputInteracao" multiple style="display: none;">
+                            <input type="file" id="fileInputInteracao" multiple style="display: none;" aria-label="Selecionar arquivos para interação">
                         </label>
                     </div>
                     
@@ -495,35 +497,44 @@
             </div>
         </div>
         
-        <!-- Página de Verificação (inicialmente oculta) -->
-        <div id="paginaVerificacao" class="hidden">
-            <button id="btnVoltarVerificacao" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
-            
-            <div class="verificacao-header">
-                <h2>Verificação de Pedidos - Hub Ideris</h2>
-                <button id="btnAtualizarVerificacao" class="btn"><i class="fas fa-sync-alt"></i> Atualizar</button>
-            </div>
-            
-            <div class="verificacao-container">
-                <div class="verificacao-input">
-                    <input type="text" id="verificacaoPedido" placeholder="Digite ou escaneie o código do pedido" autofocus>
-                    <button id="btnBuscarVerificacao" class="btn" disabled><i class="fas fa-search"></i> Buscar</button>
-                    <button id="btnLimparVerificacao" class="btn voltar"><i class="fas fa-times"></i> Limpar</button>
-                </div>
-                
-                <div class="verificacao-status" id="verificacaoStatus">Aguardando autenticação...</div>
-                
-                <div class="verificacao-resultado">
-                    <div class="verificacao-codigo">—</div>
-                    <div class="verificacao-statusDesc">—</div>
-                </div>
-                
-                <div class="verificacao-lista">
-                    <h2>Pedidos já verificados:</h2>
-                    <ul id="verificacaoListaLidos"></ul>
-                </div>
-            </div>
-        </div>
+		<!-- Página de Verificação (inicialmente oculta) -->
+		<div id="paginaVerificacao" class="hidden">
+			<button id="btnVoltarVerificacao" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+			
+			<div class="verificacao-header">
+				<h2>Verificação de Pedidos - Hub Ideris</h2>
+				<button id="btnAtualizarVerificacao" class="btn"><i class="fas fa-sync-alt"></i> Atualizar</button>
+			</div>
+			
+			<div class="verificacao-container">
+				<div class="verificacao-input">
+					<input type="text" id="verificacaoPedido" placeholder="Digite ou escaneie o código do pedido" autofocus>
+					<button id="btnBuscarVerificacao" class="btn" disabled><i class="fas fa-search"></i> Buscar</button>
+					<button id="btnLimparVerificacao" class="btn voltar"><i class="fas fa-times"></i> Limpar</button>
+				</div>
+				
+				<!-- NOVA CAIXA DE SELEÇÃO PARA VERIFICAR DUPLICADOS -->
+				<div class="verificacao-opcoes">
+					<label class="checkbox-container">
+						<input type="checkbox" id="verificarDuplicados">
+						<span class="checkmark"></span>
+						Verificar apenas duplicados (não consulta API)
+					</label>
+				</div>
+				
+				<div class="verificacao-status" id="verificacaoStatus">Aguardando autenticação...</div>
+				
+				<div class="verificacao-resultado">
+					<div class="verificacao-codigo">—</div>
+					<div class="verificacao-statusDesc">—</div>
+				</div>
+				
+				<div class="verificacao-lista">
+					<h2>Pedidos já verificados:</h2>
+					<ul id="verificacaoListaLidos"></ul>
+				</div>
+			</div>
+		</div>
         
         <!-- Página de Configurações (inicialmente oculta) -->
         <div id="paginaConfiguracoes" class="hidden">
@@ -574,17 +585,17 @@
                 <div class="estoque-status" id="estoqueStatus">Aguardando autenticação...</div>
                 
                 <div class="estoque-table-wrap">
-					<table class="estoque-table" id="skuTable" aria-label="Lista de SKUs">
-						<thead>
-							<tr>
-								<th>SKU</th>
-								<th>Produto</th> <!-- NOVA COLUNA -->
-								<th>Estoque Atual</th>
-								<th>Atualizar</th>
-							</tr>
-						</thead>
-						<tbody></tbody>
-					</table>
+                    <table class="estoque-table" id="skuTable" aria-label="Lista de SKUs">
+                        <thead>
+                            <tr>
+                                <th>SKU</th>
+                                <th>Produto</th>
+                                <th>Estoque Atual</th>
+                                <th>Atualizar</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -593,5 +604,18 @@
     <script src="scripts/firebase-config.js"></script>
     <script src="scripts/ideris-api.js"></script>
     <script src="scripts/app.js"></script>
+    
+    <!-- Script para configuração local (apenas desenvolvimento) -->
+    <script>
+        // Verifica se estamos em localhost e carrega configurações locais se existirem
+        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+            const localConfig = document.createElement('script');
+            localConfig.src = 'scripts/config.local.js';
+            localConfig.onerror = function() {
+                console.log('Arquivo de configuração local não encontrado. Usando configurações do GitHub.');
+            };
+            document.head.appendChild(localConfig);
+        }
+    </script>
 </body>
 </html>
