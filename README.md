@@ -1,113 +1,111 @@
-Sistema de Atendimentos
-Sistema completo para gerenciamento de chamados de atendimento ao cliente com integração ao Firebase e API Ideris.
+# Sistema de Atendimentos
 
-📋 Funcionalidades
-Gestão de Chamados: Criação, edição, acompanhamento e encerramento de chamados
+Sistema completo para gerenciamento de chamados de atendimento ao cliente com integração ao **Firebase** e **API Ideris**.
 
-Upload de Arquivos: Anexos em chamados e interações com limite de 3 arquivos (5MB total)
+---
 
-Dashboard: Estatísticas em tempo real com gráficos e métricas
+## 📋 Funcionalidades
 
-Integração Ideris: Consulta de pedidos, estoque e verificação de status
+### 🎯 Gestão de Chamados
+- **Criação de Chamados**: Formulário completo com validação.
+- **Acompanhamento**: Histórico de interações em tempo real.
+- **Status Dinâmico**: `Aberto`, `Em andamento`, `Revisão`, `Fechado`.
+- **Filtros Avançados**: Por responsável, tipo, marketplace e status.
+- **Busca Inteligente**: Por código ou número de pedido.
 
-Verificação de Duplicados: Modo local para verificação rápida sem consultar API
+### 📎 Sistema de Upload de Arquivos
+- **Anexos em Chamados**: Suporte a múltiplos arquivos.
+- **Limites Configuráveis**: Máximo 3 arquivos, 5MB no total.
+- **Drag & Drop**: Interface intuitiva para upload.
+- **Visualização**: Lista de arquivos com informações de tamanho.
+- **Download**: Acesso direto aos anexos.
 
-Autenticação: Sistema de login com múltiplos usuários e perfis
+### 📊 Dashboard em Tempo Real
+- **Estatísticas**: Chamados abertos (hoje / semana / mês).
+- **Métricas por Responsável**: Distribuição de carga de trabalho.
+- **Integração Ideris**: Status de pedidos por marketplace.
+- **Atualização Automática**: Dados atualizados a cada 15 minutos.
 
-Responsivo: Interface adaptável para desktop, tablet e mobile
+### 🔄 Integração Ideris
+- **Consulta de Pedidos**: Status em tempo real.
+- **Gestão de Estoque**: Consulta e atualização de SKUs.
+- **Verificação de Pedidos**: Sistema de check-in com detecção de duplicidade.
+- **Autenticação Automática**: Renovação de token a cada 7h48min.
 
-🚀 Tecnologias Utilizadas
-Frontend: HTML5, CSS3, JavaScript (ES6+)
+### 👥 Sistema de Autenticação
+- **Login Seguro**: Autenticação via Firebase Authentication.
+- **Múltiplos Usuários**: Gestão de perfis e responsáveis.
+- **Persistência**: Manutenção de sessão entre reloads.
+- **Cadastro Controlado**: Opção para ocultar registro público.
 
-Backend: Firebase (Firestore, Auth, Storage)
+### 📱 Interface Responsiva
+- **Mobile-First**: Design adaptável a todos os dispositivos.
+- **Acessibilidade**: Suporte a preferências de contraste e redução de movimento.
+- **Dark Mode**: Suporte opcional ao tema escuro.
 
-API: Ideris API v3
+---
 
-Ícones: Font Awesome 6.4.0
+## 🚀 Tecnologias Utilizadas
 
-Deploy: GitHub Pages + GitHub Actions
+**Frontend**: HTML5, CSS3 (Grid, Flexbox, Variáveis, Animações), JavaScript ES6+  
+**Backend & Serviços**: Firebase Firestore, Authentication, Storage; Ideris API v3  
+**UI/UX**: Font Awesome 6.4.0, Google Fonts, CSS Variables  
+**Deploy & DevOps**: GitHub Pages, GitHub Actions, Environment Secrets
 
-📦 Estrutura do Projeto
-text
+---
+
+## 📦 Estrutura do Projeto
+
+```
 sistema-atendimentos/
-├── index.html          # Página principal
+├── index.html                 # Página principal SPA
 ├── styles/
-│   └── main.css       # Estilos principais
+│   └── main.css               # Estilos principais (35KB)
 ├── scripts/
-│   ├── app.js         # Lógica principal da aplicação
-│   ├── firebase-config.js # Configuração do Firebase
-│   ├── ideris-api.js  # Integração com API Ideris
-│   └── config.local.js # Configuração local (opcional)
+│   ├── app.js                 # Lógica principal (800+ linhas)
+│   ├── firebase-config.js     # Configuração Firebase
+│   └── ideris-api.js          # Integração API Ideris
 ├── assets/
 │   └── images/
-│       └── favicon.ico # Ícone do site
-└── README.md          # Documentação
-⚙️ Configuração
-1. Configuração no GitHub
-Faça o fork deste repositório
+│       └── favicon.ico        # Ícone do sistema
+└── README.md                  # Documentação
+```
 
-Configure os secrets no GitHub:
+---
 
-Vá em Settings > Secrets > Actions
+## ⚙️ Configuração
 
-Adicione os seguintes secrets:
+### 1. Pré-requisitos
+- Conta no **Firebase Console**.  
+- Chave API do **Ideris**.  
+- Repositório no **GitHub**.
 
-FIREBASE_API_KEY
+### 2. Configuração do Firebase
+1. Criar projeto no Firebase Console.  
+2. Ativar serviços:
+   - **Authentication** → Método: Email/Senha (ativar).  
+   - **Cloud Firestore** → Modo: Produção (configurar regras).  
+   - **Storage** → Configuração padrão (ajustar regras).  
+3. Configurar regras de segurança conforme necessário.
 
-FIREBASE_AUTH_DOMAIN
-
-FIREBASE_PROJECT_ID
-
-FIREBASE_STORAGE_BUCKET
-
-FIREBASE_MESSAGING_SENDER_ID
-
-FIREBASE_APP_ID
-
-FIREBASE_MEASUREMENT_ID
-
-IDERIS_PRIVATE_KEY
-
-Habilite o GitHub Pages:
-
-Vá em Settings > Pages
-
-Selecione a branch main e pasta / (root)
-
-2. Configuração do Firebase
-Crie um projeto no Firebase Console
-
-Ative os serviços:
-
-Authentication: Método Email/Senha
-
-Firestore Database: Modo de produção
-
-Storage: Configuração padrão
-
-Configure as regras de segurança:
-
-Firestore Rules:
-
-javascript
+#### Exemplo: Regras Firestore
+```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permissões para coleção de chamados
     match /chamados/{chamadoId} {
       allow read, write: if request.auth != null;
     }
-    
-    // Permissões para coleção de usuários
     match /usuarios/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
-Storage Rules:
+```
 
-javascript
+#### Exemplo: Regras Storage
+```
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
@@ -116,265 +114,244 @@ service firebase.storage {
     }
   }
 }
-3. Configuração da API Ideris
-Obtenha a chave API da Ideris
+```
 
-Adicione a chave como secret IDERIS_PRIVATE_KEY no GitHub
+### 3. Configuração no GitHub
+- Em **Settings > Secrets > Actions**, adicione os secrets necessários (ex.: `FIREBASE_API_KEY`, `FIREBASE_PROJECT_ID`, `IDERIS_PRIVATE_KEY`, etc.).  
+- Configure **GitHub Pages**: Branch `main`, pasta `/` (root).
 
-A API estará disponível após o primeiro login
+#### Tabela de exemplo para os Secrets
+| Secret                    | Descrição                                | Onde obter                       |
+|--------------------------:|------------------------------------------|----------------------------------|
+| `FIREBASE_API_KEY`        | Chave pública do Firebase                | Firebase Console > Configuração  |
+| `FIREBASE_AUTH_DOMAIN`    | Domínio de autenticação                   | Firebase Console                 |
+| `FIREBASE_PROJECT_ID`     | ID do projeto                             | Firebase Console                 |
+| `FIREBASE_STORAGE_BUCKET` | Bucket do storage                         | Firebase Console > Storage       |
+| `FIREBASE_APP_ID`         | ID do app                                 | Firebase Console                 |
+| `IDERIS_PRIVATE_KEY`      | Chave de API privada Ideris               | Painel Ideris > Configurações    |
 
-🎯 Guia de Uso
-Login e Primeiro Acesso
-Acesse o sistema pela URL do GitHub Pages
+### 4. Deploy Automático
+O deploy é acionado automaticamente via GitHub Actions quando:
+- Push para a branch `main`.  
+- Secrets configurados corretamente.  
+- Estrutura de arquivos válida.
 
-Crie a primeira conta com o botão "Clique aqui para cadastrar"
+---
 
-Faça login com email e senha
+## 🎯 Guia de Uso
 
-Criando um Chamado
-Clique em "Novo Chamado" na página de listagem
+### Primeiro Acesso
+1. Acesse a URL do GitHub Pages do repositório.  
+2. Clique em **"Clique aqui para cadastrar"** para criar a primeira conta (se habilitado).  
+3. Faça login com email e senha.
 
-Preencha os campos obrigatórios:
+### Criando um Chamado
+- Clique em **"Novo Chamado"**.  
+- Preencha os campos obrigatórios:
+  - `pedido` (Número do pedido)  
+  - `responsavel` (Responsável)  
+  - `tipo` (Tipo de chamado)  
+  - `titulo`, `descricao` (Assunto / Descrição)  
+- Anexe arquivos (arrastar ou clicar).  
+- Clique em **Salvar Chamado**.
 
-Número do pedido
+### Gerenciando Chamados
+- Use filtros por responsável, tipo, marketplace e status.  
+- Busque por código ou número do pedido.  
+- Abra o chamado para ver detalhes, adicionar interações ou anexos.  
+- Altere o status entre `Aberto`, `Em andamento`, `Revisão`, `Fechado`.
 
-Responsável
+### Sistema de Verificação
+- Menu **Ferramentas > Verificação**.  
+- Insira o código do pedido.  
+- Escolha modo:
+  - **Consulta API**: Busca completa via Ideris.  
+  - **Verificação Local**: Checagem de duplicados locais.  
+- Resultado: Lista com histórico e ações disponíveis.
 
-Tipo de chamado
+### Gestão de Estoque
+- Menu **Ferramentas > Estoque**.  
+- Informe SKUs (separados por vírgula).  
+- Consulte estoques atuais e atualize quantidades (se autorizado).
 
-Assunto e descrição
+---
 
-Adicione anexos se necessário (arraste ou clique para selecionar)
+## 📊 Estrutura de Dados (exemplos)
 
-Clique em "Salvar Chamado"
-
-Gerenciando Chamados
-Filtros: Use os filtros por responsável, tipo, marketplace ou status
-
-Busca: Pesquise por código ou número de pedido
-
-Ações: Clique em um chamado para ver detalhes, adicionar interações ou anexos
-
-Integração Ideris
-Dashboard: Veja estatísticas de pedidos em tempo real
-
-Estoque: Consulte e atualize estoques de SKUs
-
-Verificação: Verifique status de pedidos individualmente
-
-Verificação de Duplicados
-Acesse a página "Verificação" no menu Ferramentas
-
-Digite o código do pedido
-
-Marque "Verificar apenas duplicados" para modo rápido local
-
-Clique em "Buscar" para verificar
-
-Modos de Verificação:
-
-Modo API: Consulta completa na Ideris (requer autenticação)
-
-Modo Local: Verificação rápida de duplicados sem internet
-
-🔧 Desenvolvimento Local
-Para desenvolvimento local, crie um arquivo scripts/config.local.js com:
-
-javascript
-// Configurações locais para desenvolvimento
-const firebaseConfig = {
-    apiKey: "sua-api-key",
-    authDomain: "seu-projeto.firebaseapp.com",
-    projectId: "seu-projeto",
-    storageBucket: "seu-projeto.firebasestorage.app",
-    messagingSenderId: "123456789",
-    appId: "sua-app-id",
-    measurementId: "G-XXXXXXXXXX"
-};
-
-const PRIVATE_KEY = "sua-chave-ideris";
-📊 Estrutura de Dados
-Coleção: chamados
-javascript
+### Coleção: `chamados`
+```
 {
-  codigo: "CH0001",           // Código sequencial
-  pedido: "12345",            // Número do pedido
-  titulo: "Problema com...",  // Assunto do chamado
-  tipo: "Devolução",          // Tipo de chamado
-  marketplace: "Mercado Livre", // Marketplace relacionado
-  status: "Aberto",           // Status: Aberto/Em andamento/Revisão/Fechado
-  responsavel: "João Silva",  // Responsável pelo chamado
-  dataAbertura: "2023-01-01T10:00:00Z", // Data de criação
-  descricao: "Descrição detalhada...", // Descrição inicial
-  userId: "abc123",           // ID do usuário que criou
-  interacoes: [               // Histórico de interações
+  "codigo": "CH0001",
+  "pedido": "12345",
+  "titulo": "Problema com entrega",
+  "tipo": "Devolução",
+  "marketplace": "Mercado Livre",
+  "status": "Aberto",
+  "responsavel": "João Silva",
+  "userId": "abc123",
+  "dataAbertura": "2023-01-01T10:00:00Z",
+  "dataUltimaAtualizacao": "2023-01-01T11:30:00Z",
+  "descricao": "Descrição detalhada...",
+  "anexos": [
     {
-      data: "2023-01-01T10:00:00Z",
-      autor: "João Silva",
-      mensagem: "Chamado aberto",
-      anexos: [] // Array de anexos
+      "nome": "comprovante.pdf",
+      "tamanho": 1024000,
+      "url": "https://storage.com/...",
+      "caminho": "chamados/CH0001/comprovante.pdf",
+      "tipo": "chamado"
     }
   ],
-  anexos: [                   // Anexos do chamado
+  "interacoes": [
     {
-      nome: "arquivo.pdf",
-      tamanho: 1024,
-      url: "https://...",
-      caminho: "chamados/CH0001/arquivo.pdf",
-      tipo: "chamado"
+      "data": "2023-01-01T10:00:00Z",
+      "autor": "João Silva",
+      "mensagem": "Chamado aberto",
+      "anexos": []
     }
   ]
 }
-Coleção: usuarios
-javascript
+```
+
+### Coleção: `usuarios`
+```
 {
-  nome: "João Silva",         // Nome completo
-  email: "joao@empresa.com",  // Email de login
-  dataCriacao: "2023-01-01T10:00:00Z", // Data de cadastro
-  ultimoLogin: "2023-01-15T14:30:00Z"  // Último acesso
+  "nome": "João Silva",
+  "email": "joao@empresa.com",
+  "dataCriacao": "2023-01-01T10:00:00Z",
+  "ultimoLogin": "2023-01-15T14:30:00Z",
+  "ativo": true
 }
-🎮 Funcionalidades de Verificação
-Modo de Operação
-🌐 Modo API: Consulta completa na Ideris (status real)
+```
 
-🔍 Modo Local: Verificação rápida de duplicados
+---
 
-Tipos de Duplicação Detectados
-Código Duplicado: Mesmo número de pedido
+## 🔧 Desenvolvimento Local
 
-Delivery Duplicado: Mesmo código de entrega
+```
+# Clonar repositório
+git clone https://github.com/seu-usuario/sistema-atendimentos.git
+cd sistema-atendimentos
 
-Pagamento Cancelado: Status específico da Ideris
+# Criar arquivo de configuração local com as variáveis (exemplo)
+echo '// Configurações locais para desenvolvimento
+const firebaseConfig = {
+  apiKey: "sua-api-key",
+  authDomain: "seu-projeto.firebaseapp.com",
+  projectId: "seu-projeto",
+  storageBucket: "seu-projeto.firebasestorage.app",
+  messagingSenderId: "123456789",
+  appId: "sua-app-id",
+  measurementId: "G-XXXXXXXXXX"
+};
 
-Visualização
-✅ Verde: Não duplicado
+const PRIVATE_KEY = "sua-chave-ideris";' > scripts/config.local.js
 
-⚠️ Amarelo: Código duplicado
+# Servidor de desenvolvimento
+python -m http.server 8000
+# ou
+npx http-server -p 8000
+# ou
+php -S localhost:8000
+```
 
-❌ Vermelho: Delivery duplicado
+Acesse: `http://localhost:8000`
 
-🔵 Azul: Consulta API completa
+---
 
-🐛 Solução de Problemas
-Upload de Arquivos Não Funciona
-Verifique as regras do Firebase Storage
+## 🐛 Solução de Problemas
 
-Confirme que o tamanho total não excede 5MB
+**Upload de Arquivos Não Funciona**  
+- Verifique regras do Firebase Storage.  
+- Confirme limite de 5MB não excedido.  
+- Teste com arquivos menores.
 
-Verifique se há no máximo 3 arquivos
+**API Ideris Não Conecta**  
+- Verifique o secret `IDERIS_PRIVATE_KEY`.  
+- Teste a autenticação manualmente (curl / Postman).
 
-API Ideris Não Conecta
-Verifique se a chave API está correta
+**Dados Não Carregam**  
+- Verifique as Firestore Rules.  
+- Confirme que o usuário está autenticado.  
+- Verifique erros no console do navegador.
 
-Confirme se o secret IDERIS_PRIVATE_KEY foi configurado
+**Logs de Depuração**
+```
+localStorage.setItem('debug', 'true');
+location.reload();
+```
 
-Erro de Autenticação
-Verifique se o Authentication está ativo no Firebase
+---
 
-Confirme se o método Email/Senha está habilitado
+## 📈 Monitoramento e Métricas
 
-Dados Não Carregam
-Verifique as regras do Firestore
+- **Tempo de Carregamento:** < 3s  
+- **Tamanho Total:** ~500KB (otimizado)  
+- **Compatibilidade:** Chrome, Firefox, Safari, Edge  
+- **Dispositivos:** Desktop, Tablet, Mobile
 
-Confirme a conexão com a internet
+**Performance**
+- Leituras Firestore otimizadas com cache.  
+- Uploads em paralelo com progresso no Storage.  
+- Cache de pedidos Ideris: 15 minutos.  
+- Funcionalidade básica offline disponível.
 
-Verificação de Duplicados Não Funciona
-Certifique-se de que há pedidos na lista para comparar
+---
 
-Verifique se o código foi digitado corretamente
+## 🔄 Atualizações e Manutenção
 
-📈 Melhorias Futuras
-Notificações por email
+**Versionamento**
+- Versão atual: `2.0.0`  
+- Changelog mantido em GitHub Releases.  
+- Backwards compatibility: prioridade.
 
-Relatórios em PDF
+**Backup**
+```
+# Backup automático do Firestore (configurar no Firebase Console)
+# Exemplo: agendamento de exportações periódicas via Firebase/Cloud Functions ou Cloud Scheduler
+```
 
-API REST para integrações
+---
 
-App mobile
+## 🤝 Contribuição
 
-Sistema de prioridades
+**Fluxo recomendado**
+1. Fork do projeto.  
+2. Criar branch para feature: `git checkout -b feature/NovaFuncionalidade`.  
+3. Commit das mudanças: `git commit -am 'Adiciona nova funcionalidade'`.  
+4. Push para o branch: `git push origin feature/NovaFuncionalidade`.  
+5. Abrir Pull Request.
 
-Tempo de resolução (SLA)
+**Padrões**
+- HTML semântico e acessível.  
+- CSS: metodologia BEM.  
+- JavaScript: ES6+, async/await, tratamento de erros.  
+- Commits: Conventional Commits.
 
-Exportação de dados
+---
 
-Backup automático
+## 📄 Licença
 
-Logs de auditoria
+Este projeto está sob a licença **MIT**. Consulte o arquivo `LICENSE` para detalhes.
 
-🤝 Contribuição
-Faça um fork do projeto
+---
 
-Crie uma branch para sua feature (git checkout -b feature/AmazingFeature)
+## 🆘 Suporte
 
-Commit suas mudanças (git commit -m 'Add some AmazingFeature')
+**Canais**
+- Documentação: este `README.md`.  
+- Issues: GitHub Issues do repositório.  
+- Email: `suporte@empresa.com`.
 
-Push para a branch (git push origin feature/AmazingFeature)
+**SLA de Resposta**
+- Crítico: 2 horas  
+- Alta: 4 horas  
+- Média: 24 horas  
+- Baixa: 72 horas
 
-Abra um Pull Request
+---
 
-Padrões de Código
-Use ESLint para verificação de código
-
-Mantenha a consistência de estilo
-
-Documente novas funcionalidades
-
-Teste em múltiplos navegadores
-
-📄 Licença
-Este projeto está sob a licença MIT. Veja o arquivo LICENSE para detalhes.
-
-🆘 Suporte
-Para dúvidas ou problemas:
-
-Verifique a documentação acima
-
-Consulte as issues do GitHub
-
-Entre em contato com a equipe de desenvolvimento
-
-Canais de Suporte
-Issues GitHub: Para bugs e melhorias
-
-Email: suporte@empresa.com
-
-Documentação: Wiki do projeto
-
-🔄 Atualizações Recentes
-Versão 2.1.0
-✅ Adicionada verificação local de duplicados
-
-✅ Melhorias de desempenho na consulta API
-
-✅ Interface redesenhada para verificação
-
-✅ Novos indicadores visuais
-
-✅ Tooltips informativos
-
-Versão 2.0.0
-✅ Sistema completo de upload de arquivos
-
-✅ Integração com Firebase Storage
-
-✅ Dashboard com estatísticas em tempo real
-
-✅ Sistema de autenticação robusto
-
-✅ Design responsivo completo
-
-Versão: 2.1.0
-Última atualização: 2023
-Desenvolvido por: Equipe de Tecnologia
-Status: Produção ✅
-
-Links Úteis:
-
-Aplicação
-
-Documentação
-
-Issues
-
-Releases
+**Última Atualização:** `2025-09-23`  
+**Versão:** `2.0.0`  
+**Desenvolvido por:** Equipe de Tecnologia  
+**Status:** ✅ Produção
+```
