@@ -852,16 +852,16 @@ function atualizarNotificacaoUsuario() {
     }
 }
 
-// Mostrar/ocultar campo marketplace conforme tipo selecionado
-tipoChamado.addEventListener('change', function() {
-    if (tiposComMarketplace.includes(this.value)) {
-        marketplaceGroup.classList.remove('hidden');
-        marketplace.setAttribute('required', 'required');
-    } else {
-        marketplaceGroup.classList.add('hidden');
-        marketplace.removeAttribute('required');
-    }
-});
+//// Mostrar/ocultar campo marketplace conforme tipo selecionado
+//tipoChamado.addEventListener('change', function() {
+//    if (tiposComMarketplace.includes(this.value)) {
+//        marketplaceGroup.classList.remove('hidden');
+//        marketplace.setAttribute('required', 'required');
+//    } else {
+//        marketplaceGroup.classList.add('hidden');
+//        marketplace.removeAttribute('required');
+//    }
+//});
 
 // Verificar pedido ao digitar
 pedidoField.addEventListener('blur', async function() {
