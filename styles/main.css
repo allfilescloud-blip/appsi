@@ -797,16 +797,28 @@ textarea {
     text-align: center;
 }
 
-/*.upload-error {
-/*    color: #ef4444;
-/*    margin-top: 10px;
-/*    font-size: 14px;
-/*    text-align: center;
-/*    padding: 8px;
-/*    background: #fef2f2;
-/*    border-radius: 6px;
-/*    border-left: 4px solid #ef4444;
-/*}
+.upload-error {
+    color: #ef4444;
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: center;
+    padding: 8px;
+    background: #fef2f2;
+    border-radius: 6px;
+    border-left: 4px solid #ef4444;
+}
+
+/* Estilo para mensagens de erro de upload (oculto por padrão) */
+.upload-error-message {
+    color: #ef4444;
+    font-size: 14px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background-color: #fef2f2;
+    border-radius: 6px;
+    border-left: 4px solid #ef4444;
+    display: none; /* Oculto por padrão */
+}
 
 /* Página de detalhes */
 .chamado-header {
