@@ -145,7 +145,7 @@ let pedidosVerificados = [];
 const tiposComMarketplace = ['Devolução', 'Reembolso', 'Fraude', 'Contatar MarketPlace'];
 
 // Status para cada aba
-const statusAbertos = ['Aberto', 'Em andamento', 'Revisão'];
+const statusAbertos = ['Aberto', 'Pendente', 'Revisão'];
 const statusFechados = ['Fechado'];
 
 // Limites de upload
@@ -864,7 +864,7 @@ function exibirChamados(chamados) {
         // Determinar classe de status
         let statusClass = '';
         if (chamado.status === 'Aberto') statusClass = 'aberto';
-        else if (chamado.status === 'Em andamento') statusClass = 'andamento';
+        else if (chamado.status === 'Pendente') statusClass = 'pendente';
         else if (chamado.status === 'Revisão') statusClass = 'revisao';
         else if (chamado.status === 'Fechado') statusClass = 'fechado';
         
@@ -1105,7 +1105,7 @@ async function abrirDetalhesChamado(id) {
         statusEl.className = 'status';
         
         if (chamadoAtual.status === 'Aberto') statusEl.classList.add('aberto');
-        else if (chamadoAtual.status === 'Em andamento') statusEl.classList.add('andamento');
+        else if (chamadoAtual.status === 'Pendente') statusEl.classList.add('pendente');
         else if (chamadoAtual.status === 'Revisão') statusEl.classList.add('revisao');
         else if (chamadoAtual.status === 'Fechado') statusEl.classList.add('fechado');
         
@@ -1211,10 +1211,10 @@ btnAdicionarInteracao.addEventListener('click', async function() {
             interacoes: firebase.firestore.FieldValue.arrayUnion(novaInteracaoObj)
         });
         
-        // Atualizar status para "Em andamento" se estava "Aberto"
+        // Atualizar status para "Pendente" se estava "Aberto"
         if (chamadoAtual.status === 'Aberto') {
             await db.collection('chamados').doc(chamadoAtual.id).update({
-                status: 'Em andamento'
+                status: 'Pendente'
             });
         }
         
@@ -1225,7 +1225,7 @@ btnAdicionarInteracao.addEventListener('click', async function() {
         // Atualizar o status na página de detalhes
         const statusEl = document.getElementById('detalhesStatus');
         statusEl.textContent = chamadoAtual.status;
-        statusEl.className = 'status andamento';
+        statusEl.className = 'status pendente';
         
         // Recarregar interações
         carregarInteracoes();
