@@ -494,24 +494,51 @@ function removerArquivo(index) {
     totalTamanhoArquivos -= arquivosSelecionados[index].size;
     arquivosSelecionados.splice(index, 1);
     atualizarListaArquivos();
+    
+    // Ocultar mensagem de erro ao remover arquivos
+    const uploadErrorElement = document.getElementById('uploadError');
+    if (uploadErrorElement) {
+        uploadErrorElement.textContent = '';
+        uploadErrorElement.style.display = 'none';
+    }
 }
 
 function removerArquivoInteracao(index) {
     totalTamanhoArquivosInteracao -= arquivosInteracao[index].size;
     arquivosInteracao.splice(index, 1);
     atualizarListaArquivosInteracao();
+    
+    // Ocultar mensagem de erro ao remover arquivos
+    const uploadErrorElement = document.getElementById('uploadErrorInteracao');
+    if (uploadErrorElement) {
+        uploadErrorElement.textContent = '';
+        uploadErrorElement.style.display = 'none';
+    }
 }
 
 function validarArquivos(arquivos, tipo = 'formulario') {
-    const uploadErrorElement = tipo === 'formulario' ? uploadError : uploadErrorInteracao;
+    const uploadErrorElement = tipo === 'formulario' ? 
+        document.getElementById('uploadError') : 
+        document.getElementById('uploadErrorInteracao');
+    
+    const uploadStatusElement = tipo === 'formulario' ? uploadStatus : uploadStatusInteracao;
     const totalAtual = tipo === 'formulario' ? totalTamanhoArquivos : totalTamanhoArquivosInteracao;
     const listaArquivos = tipo === 'formulario' ? arquivosSelecionados : arquivosInteracao;
     
-    uploadErrorElement.textContent = '';
+    // Limpar e ocultar mensagens de erro
+    if (uploadErrorElement) {
+        uploadErrorElement.textContent = '';
+        uploadErrorElement.style.display = 'none';
+    }
     
     // Verificar número máximo de arquivos
     if (listaArquivos.length + arquivos.length > MAX_ARQUIVOS) {
-        uploadErrorElement.textContent = `Você pode adicionar no máximo ${MAX_ARQUIVOS} arquivos.`;
+        const mensagem = `Você pode adicionar no máximo ${MAX_ARQUIVOS} arquivos.`;
+        if (uploadErrorElement) {
+            uploadErrorElement.textContent = mensagem;
+            uploadErrorElement.style.display = 'block'; // Mostrar apenas em caso de erro
+        }
+        showToast(mensagem, 'error');
         return false;
     }
     
@@ -522,7 +549,12 @@ function validarArquivos(arquivos, tipo = 'formulario') {
     }
     
     if (novoTotal > MAX_TAMANHO_TOTAL) {
-        uploadErrorElement.textContent = `O tamanho total dos arquivos não pode exceder ${formatarTamanho(MAX_TAMANHO_TOTAL)}.`;
+        const mensagem = `O tamanho total dos arquivos não pode exceder ${formatarTamanho(MAX_TAMANHO_TOTAL)}.`;
+        if (uploadErrorElement) {
+            uploadErrorElement.textContent = mensagem;
+            uploadErrorElement.style.display = 'block'; // Mostrar apenas em caso de erro
+        }
+        showToast(mensagem, 'error');
         return false;
     }
     
@@ -530,6 +562,10 @@ function validarArquivos(arquivos, tipo = 'formulario') {
 }
 
 function adicionarArquivos(novosArquivos, tipo = 'formulario') {
+    const uploadErrorElement = tipo === 'formulario' ? 
+        document.getElementById('uploadError') : 
+        document.getElementById('uploadErrorInteracao');
+    
     if (!validarArquivos(novosArquivos, tipo)) {
         return;
     }
@@ -540,13 +576,27 @@ function adicionarArquivos(novosArquivos, tipo = 'formulario') {
             totalTamanhoArquivos += arquivo.size;
         }
         atualizarListaArquivos();
+        
+        // Limpar e ocultar mensagem de erro se a adição foi bem-sucedida
+        if (uploadErrorElement) {
+            uploadErrorElement.textContent = '';
+            uploadErrorElement.style.display = 'none';
+        }
     } else {
         for (const arquivo of novosArquivos) {
             arquivosInteracao.push(arquivo);
             totalTamanhoArquivosInteracao += arquivo.size;
         }
         atualizarListaArquivosInteracao();
+        
+        // Limpar e ocultar mensagem de erro se a adição foi bem-sucedida
+        if (uploadErrorElement) {
+            uploadErrorElement.textContent = '';
+            uploadErrorElement.style.display = 'none';
+        }
     }
+    
+    showToast(`${novosArquivos.length} arquivo(s) adicionado(s) com sucesso!`, 'success');
 }
 
 async function fazerUploadAnexos(chamadoId, arquivos, tipo = 'chamado') {
@@ -1191,6 +1241,21 @@ btnAdicionarInteracao.addEventListener('click', async function() {
         console.error("Erro ao adicionar interação:", error);
         showToast('Erro ao adicionar interação. Tente novamente.', 'error');
     }
+
+    // Limpar campos
+    novaInteracao.value = '';
+    arquivosInteracao = [];
+    totalTamanhoArquivosInteracao = 0;
+    atualizarListaArquivosInteracao();
+    
+    // Limpar e ocultar mensagem de erro
+    const uploadErrorElement = document.getElementById('uploadErrorInteracao');
+    if (uploadErrorElement) {
+        uploadErrorElement.textContent = '';
+        uploadErrorElement.style.display = 'none';
+    }
+    
+    showToast('Interação adicionada com sucesso!', 'success');
 });
 
 // Finalizar chamado
@@ -1414,6 +1479,20 @@ btnNovoChamado.addEventListener('click', async function() {
     
     // Limpar alerta de pedido
     pedidoAlert.classList.add('hidden');
+    
+    // Limpar arquivos selecionados
+    arquivosSelecionados = [];
+    totalTamanhoArquivos = 0;
+    atualizarListaArquivos();
+    
+    mostrarPagina(paginaFormulario);
+
+    // Limpar e ocultar mensagens de erro
+    const uploadErrorElement = document.getElementById('uploadError');
+    if (uploadErrorElement) {
+        uploadErrorElement.textContent = '';
+        uploadErrorElement.style.display = 'none';
+    }
     
     // Limpar arquivos selecionados
     arquivosSelecionados = [];
