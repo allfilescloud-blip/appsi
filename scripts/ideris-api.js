@@ -521,3 +521,269 @@ function limparListaEstoque() {
     skuTable.querySelector("tbody").innerHTML = "";
     estoqueStatus.textContent = "Lista limpa.";
 }
+
+// Novas funções para melhorar a API Ideris
+
+// Função para buscar informações detalhadas do pedido
+async function buscarDetalhesPedido(codigoPedido) {
+    if (!jwtToken) {
+        await loginIderisVerificacao();
+        if (!jwtToken) throw new Error("Falha na autenticação");
+    }
+
+    try {
+        const url = `https://apiv3.ideris.com.br/order/${encodeURIComponent(codigoPedido)}`;
+        const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+                "accept": "application/json",
+                "Authorization": `Bearer ${jwtToken}`
+            }
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Erro na requisição: ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        return data.obj || null;
+    } catch (error) {
+        console.error("Erro ao buscar detalhes do pedido:", error);
+        throw error;
+    }
+}
+
+// Função para buscar múltiplos pedidos de uma vez
+async function buscarMultiplosPedidos(codigosPedidos) {
+    if (!jwtToken) {
+        await loginIderisVerificacao();
+        if (!jwtToken) throw new Error("Falha na autenticação");
+    }
+
+    const resultados = [];
+    
+    for (const codigo of codigosPedidos) {
+        try {
+            const detalhes = await buscarDetalhesPedido(codigo);
+            resultados.push({
+                codigo,
+                sucesso: true,
+                dados: detalhes
+            });
+        } catch (error) {
+            resultados.push({
+                codigo,
+                sucesso: false,
+                erro: error.message
+            });
+        }
+        
+        // Pequena pausa para não sobrecarregar a API
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return resultados;
+}
+
+// Função para buscar histórico de pedidos por período
+async function buscarPedidosPorPeriodo(dataInicio, dataFim, marketplaceId = null) {
+    if (!jwtToken) {
+        await loginIderisVerificacao();
+        if (!jwtToken) throw new Error("Falha na autenticação");
+    }
+
+    try {
+        let url = `https://apiv3.ideris.com.br/order/search?createdInitialDate=${dataInicio}&createdFinalDate=${dataFim}`;
+        
+        if (marketplaceId) {
+            url += `&authenticationId=${marketplaceId}`;
+        }
+
+        const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+                "accept": "application/json",
+                "Authorization": `Bearer ${jwtToken}`
+            }
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Erro na requisição: ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        return data.obj || [];
+    } catch (error) {
+        console.error("Erro ao buscar pedidos por período:", error);
+        throw error;
+    }
+}
+
+// Função para buscar informações de produtos
+async function buscarInformacoesProduto(sku) {
+    if (!jwtToken) {
+        await loginIderisEstoque();
+        if (!jwtToken) throw new Error("Falha na autenticação");
+    }
+
+    try {
+        const url = `https://apiv3.ideris.com.br/sku/search?sku=${encodeURIComponent(sku)}`;
+        const resp = await fetch(url, {
+            method: "GET",
+            headers: {
+                "accept": "application/json",
+                "Authorization": `Bearer ${jwtToken}`
+            }
+        });
+
+        if (!resp.ok) {
+            throw new Error(`Erro na requisição: ${resp.status}`);
+        }
+
+        const data = await resp.json();
+        return data.obj && data.obj.length > 0 ? data.obj[0] : null;
+    } catch (error) {
+        console.error("Erro ao buscar informações do produto:", error);
+        throw error;
+    }
+}
+
+// Função para atualizar preço do produto
+async function atualizarPrecoProduto(sku, novoPreco) {
+    if (!jwtToken) {
+        await loginIderisEstoque();
+        if (!jwtToken) throw new Error("Falha na autenticação");
+    }
+
+    try {
+        const payload = {
+            sku: sku,
+            price: parseFloat(novoPreco)
+        };
+
+        const resp = await fetch("https://apiv3.ideris.com.br/sku/price", {
+            method: "PUT",
+            headers: {
+                "accept": "*/*",
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${jwtToken}`
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+            const errorText = await resp.text();
+            throw new Error(`Erro ao atualizar preço: ${resp.status} - ${errorText}`);
+        }
+
+        return true;
+    } catch (error) {
+        console.error("Erro ao atualizar preço do produto:", error);
+        throw error;
+    }
+}
+
+// Função para verificar status da API
+async function verificarStatusAPI() {
+    try {
+        const inicio = Date.now();
+        const resp = await fetch("https://apiv3.ideris.com.br/login", {
+            method: "POST",
+            headers: {
+                "accept": "*/*",
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${PRIVATE_KEY}`
+            },
+            body: `"${PRIVATE_KEY}"`
+        });
+        const tempoResposta = Date.now() - inicio;
+
+        return {
+            online: resp.ok,
+            tempoResposta: tempoResposta,
+            status: resp.status,
+            statusTexto: resp.statusText
+        };
+    } catch (error) {
+        return {
+            online: false,
+            tempoResposta: null,
+            status: null,
+            statusTexto: error.message
+        };
+    }
+}
+
+// Função para fazer logoff da API
+function logoutIderis() {
+    jwtToken = null;
+    marketplaceMap = {};
+    
+    if (renewTimerEstoque) {
+        clearTimeout(renewTimerEstoque);
+        renewTimerEstoque = null;
+    }
+    
+    if (renewTimerVerificacao) {
+        clearTimeout(renewTimerVerificacao);
+        renewTimerVerificacao = null;
+    }
+    
+    console.log("Logoff da API Ideris realizado com sucesso");
+}
+
+// Função para obter estatísticas de uso da API
+function getEstatisticasAPI() {
+    return {
+        tokenAtivo: !!jwtToken,
+        marketplacesCarregados: Object.keys(marketplaceMap).length,
+        proximaRenovacao: renewTimerEstoque ? "Agendada" : "Não agendada",
+        ultimaAtualizacao: new Date().toLocaleString('pt-BR')
+    };
+}
+
+// Exportar funções para uso global
+window.iderisAPI = {
+    loginIderis,
+    loginIderisVerificacao,
+    loginIderisEstoque,
+    loadMarketplaces,
+    loadTotals,
+    buscarSKUsEstoque,
+    atualizarEstoques,
+    buscarPedidoVerificacao,
+    verificarDuplicadosLocalmente,
+    limparVerificacao,
+    limparListaEstoque,
+    buscarDetalhesPedido,
+    buscarMultiplosPedidos,
+    buscarPedidosPorPeriodo,
+    buscarInformacoesProduto,
+    atualizarPrecoProduto,
+    verificarStatusAPI,
+    logoutIderis,
+    getEstatisticasAPI,
+    getJwtToken: () => jwtToken,
+    getMarketplaceMap: () => marketplaceMap
+};
+
+// Inicialização automática quando o documento estiver pronto
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('API Ideris carregada e pronta para uso');
+    
+    // Verificar status da API periodicamente (a cada 30 minutos)
+    setInterval(async () => {
+        if (jwtToken) {
+            const status = await verificarStatusAPI();
+            if (!status.online) {
+                console.warn('API Ideris offline, tentando reconectar...');
+                try {
+                    await loginIderis();
+                    console.log('Reconexão com API Ideris bem-sucedida');
+                } catch (error) {
+                    console.error('Falha na reconexão com API Ideris:', error);
+                }
+            }
+        }
+    }, 30 * 60 * 1000); // 30 minutos
+});

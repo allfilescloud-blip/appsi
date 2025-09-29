@@ -8,8 +8,10 @@ const paginaDetalhes = document.getElementById('paginaDetalhes');
 const paginaVerificacao = document.getElementById('paginaVerificacao');
 const paginaConfiguracoes = document.getElementById('paginaConfiguracoes');
 const paginaEstoque = document.getElementById('paginaEstoque');
+const paginaSuporte = document.getElementById('paginaSuporte');
 const btnNavDashboard = document.getElementById('btnNavDashboard');
 const btnNavListagem = document.getElementById('btnNavListagem');
+const btnNavSuporte = document.getElementById('btnNavSuporte');
 const btnNovoChamado = document.getElementById('btnNovoChamado');
 const btnVoltar = document.getElementById('btnVoltar');
 const btnVoltarDetalhes = document.getElementById('btnVoltarDetalhes');
@@ -122,6 +124,36 @@ const estoqueStatus = document.getElementById('estoqueStatus');
 const lastSearch = document.getElementById('lastSearch');
 const skuTable = document.getElementById('skuTable');
 
+// Elementos para a página de suporte
+const searchInputSuporte = document.getElementById('searchInputSuporte');
+const newRecordBtn = document.getElementById('newRecordBtn');
+const errorsTableBody = document.getElementById('errorsTableBody');
+const mobileErrorsList = document.getElementById('mobileErrorsList');
+const noResultsSuporte = document.getElementById('noResultsSuporte');
+const recordModal = document.getElementById('recordModal');
+const viewModal = document.getElementById('viewModal');
+const recordForm = document.getElementById('recordForm');
+const recordId = document.getElementById('recordId');
+const autoCode = document.getElementById('autoCode');
+const code = document.getElementById('code');
+const locationInput = document.getElementById('location');
+const description = document.getElementById('description');
+const correction = document.getElementById('correction');
+const notes = document.getElementById('notes');
+const autoCodeInfo = document.getElementById('autoCodeInfo');
+const codePreview = document.getElementById('codePreview');
+const cancelBtn = document.getElementById('cancelBtn');
+const saveBtn = document.getElementById('saveBtn');
+const closeViewBtn = document.getElementById('closeViewBtn');
+const editFromViewBtn = document.getElementById('editFromViewBtn');
+const viewCode = document.getElementById('viewCode');
+const viewLocation = document.getElementById('viewLocation');
+const viewDescription = document.getElementById('viewDescription');
+const viewCorrection = document.getElementById('viewCorrection');
+const viewNotes = document.getElementById('viewNotes');
+const viewCreatedAt = document.getElementById('viewCreatedAt');
+const viewUpdatedAt = document.getElementById('viewUpdatedAt');
+
 // Variáveis globais
 let chamadoAtual = null;
 let user = null;
@@ -185,6 +217,7 @@ function mostrarPagina(pagina) {
     paginaVerificacao.classList.add('hidden');
     paginaConfiguracoes.classList.add('hidden');
     paginaEstoque.classList.add('hidden');
+    paginaSuporte.classList.add('hidden');
     
     // Mostrar apenas a página solicitada
     pagina.classList.remove('hidden');
@@ -201,6 +234,10 @@ function mostrarPagina(pagina) {
         }
     } else if (pagina === paginaListagem) {
         btnNavListagem.classList.add('active');
+    } else if (pagina === paginaSuporte) {
+        btnNavSuporte.classList.add('active');
+        // Carregar registros quando acessar a página
+        carregarRegistrosSuporte();
     }
 }
 
@@ -1470,6 +1507,10 @@ btnNavListagem.addEventListener('click', function() {
     mostrarPagina(paginaListagem);
 });
 
+btnNavSuporte.addEventListener('click', function() {
+    mostrarPagina(paginaSuporte);
+});
+
 btnNovoChamado.addEventListener('click', async function() {
     // Carregar lista de usuários
     await atualizarListaUsuarios();
@@ -1680,6 +1721,9 @@ auth.onAuthStateChanged(async (firebaseUser) => {
             console.error("Erro ao conectar com API Ideris:", error);
             showToast('Erro ao conectar com API Ideris', 'error');
         }
+
+        // Inicializar sistema de suporte
+        initializeSuporteSystem();
     } else {
         // Usuário não logado
         user = null;
@@ -1693,6 +1737,7 @@ auth.onAuthStateChanged(async (firebaseUser) => {
         paginaVerificacao.classList.add('hidden');
         paginaConfiguracoes.classList.add('hidden');
         paginaEstoque.classList.add('hidden');
+        paginaSuporte.classList.add('hidden');
         paginaLogin.classList.remove('hidden');
         
         // Aplicar configuração de ocultar cadastro
@@ -2026,6 +2071,431 @@ document.getElementById('btnConfirmarResponsavel').addEventListener('click', asy
         showToast('Erro ao alterar responsável. Tente novamente.', 'error');
     }
 });
+
+// ============================================
+// SISTEMA DE SUPORTE - CADASTRO DE ERROS
+// ============================================
+
+// Função para gerar código automático no formato ERR0001
+async function generateAutoCode() {
+    try {
+        const snapshot = await db.collection('erros_suporte')
+            .orderBy('code', 'desc')
+            .limit(1)
+            .get();
+        
+        let nextNumber = 1;
+        
+        if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+                const code = doc.data().code;
+                if (code && code.startsWith('ERR')) {
+                    const numStr = code.substring(3);
+                    const num = parseInt(numStr);
+                    if (!isNaN(num)) {
+                        nextNumber = num + 1;
+                    }
+                }
+            });
+        }
+        
+        return `ERR${nextNumber.toString().padStart(4, '0')}`;
+    } catch (error) {
+        console.error("Erro ao gerar código automático:", error);
+        // Fallback
+        const snapshot = await db.collection('erros_suporte').get();
+        return `ERR${(snapshot.size + 1).toString().padStart(4, '0')}`;
+    }
+}
+
+// Função para formatar data
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR') + ' às ' + 
+           date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+}
+
+// Obter todos os registros
+async function getAllRecordsSuporte() {
+    try {
+        const snapshot = await db.collection('erros_suporte')
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        const records = [];
+        snapshot.forEach(doc => {
+            records.push({ id: doc.id, ...doc.data() });
+        });
+        return records;
+    } catch (error) {
+        console.error("Erro ao carregar registros:", error);
+        showToast('Erro ao carregar registros', 'error');
+        return [];
+    }
+}
+
+// Salvar registro
+async function saveRecordSuporte(record) {
+    try {
+        const currentDate = new Date().toISOString();
+        
+        // Remove o campo 'id' do objeto que será salvo
+        const { id, ...dataToSave } = record;
+        
+        if (id) {
+            // Atualizar registro existente
+            await db.collection('erros_suporte').doc(id).update({
+                ...dataToSave,
+                updatedAt: currentDate
+            });
+            return { id, ...dataToSave, updatedAt: currentDate };
+        } else {
+            // Adicionar novo registro
+            const docRef = await db.collection('erros_suporte').add({
+                ...dataToSave,
+                createdAt: currentDate,
+                updatedAt: currentDate
+            });
+            // Retorna sem o campo 'id' no nível raiz dos dados
+            return { 
+                id: docRef.id, 
+                ...dataToSave,
+                createdAt: currentDate,
+                updatedAt: currentDate 
+            };
+        }
+    } catch (error) {
+        console.error("Erro ao salvar registro:", error);
+        throw error;
+    }
+}
+
+// Excluir registro
+async function deleteRecordSuporte(id) {
+    try {
+        await db.collection('erros_suporte').doc(id).delete();
+        return true;
+    } catch (error) {
+        console.error("Erro ao excluir registro:", error);
+        throw error;
+    }
+}
+
+// Pesquisar registros
+async function searchRecordsSuporte(query) {
+    try {
+        const records = await getAllRecordsSuporte();
+        if (!query) return records;
+        
+        const lowerQuery = query.toLowerCase();
+        return records.filter(record => 
+            record.code.toLowerCase().includes(lowerQuery) || 
+            record.description.toLowerCase().includes(lowerQuery) ||
+            (record.location && record.location.toLowerCase().includes(lowerQuery))
+        );
+    } catch (error) {
+        console.error("Erro ao pesquisar registros:", error);
+        return [];
+    }
+}
+
+// Limitar o tamanho do texto exibido
+const truncateText = (text, maxLength) => {
+    if (!text) return 'Não informado';
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+};
+
+// Renderizar listagem
+function renderTableSuporte(records) {
+    const tbody = document.getElementById('errorsTableBody');
+    const mobileList = document.getElementById('mobileErrorsList');
+    const noResults = document.getElementById('noResultsSuporte');
+    
+    tbody.innerHTML = '';
+    mobileList.innerHTML = '';
+    
+    if (records.length === 0) {
+        noResults.style.display = 'block';
+        return;
+    }
+    
+    noResults.style.display = 'none';
+    
+    records.forEach(record => {
+        // Renderizar para desktop (tabela)
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td>${record.code}</td>
+            <td>${truncateText(record.location, 20)}</td>
+            <td>${truncateText(record.description, 50)}</td>
+            <td>${truncateText(record.correction, 50)}</td>
+            <td class="actions-cell">
+                <button class="icon-btn view" data-id="${record.id}" title="Visualizar">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="icon-btn edit" data-id="${record.id}" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="icon-btn delete" data-id="${record.id}" title="Excluir">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+        
+        // Renderizar para mobile (cards)
+        const card = document.createElement('div');
+        card.className = 'mobile-card';
+        card.innerHTML = `
+            <div class="card-field">
+                <div class="card-label">Código</div>
+                <div class="card-value">${record.code}</div>
+            </div>
+            <div class="card-field">
+                <div class="card-label">Local</div>
+                <div class="card-value">${record.location || 'Não informado'}</div>
+            </div>
+            <div class="card-field">
+                <div class="card-label">Descrição do Erro</div>
+                <div class="card-value">${record.description}</div>
+            </div>
+            <div class="card-field">
+                <div class="card-label">Correção</div>
+                <div class="card-value">${truncateText(record.correction, 100)}</div>
+            </div>
+            <div class="mobile-actions">
+                <button class="icon-btn view" data-id="${record.id}" title="Visualizar">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="icon-btn edit" data-id="${record.id}" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="icon-btn delete" data-id="${record.id}" title="Excluir">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        mobileList.appendChild(card);
+    });
+    
+    // Adicionar event listeners para os botões de ação
+    attachEventListenersSuporte();
+}
+
+// Anexar event listeners aos botões
+function attachEventListenersSuporte() {
+    document.querySelectorAll('.icon-btn.view').forEach(btn => {
+        btn.addEventListener('click', () => viewRecordSuporte(btn.getAttribute('data-id')));
+    });
+    
+    document.querySelectorAll('.icon-btn.edit').forEach(btn => {
+        btn.addEventListener('click', () => editRecordSuporte(btn.getAttribute('data-id')));
+    });
+    
+    document.querySelectorAll('.icon-btn.delete').forEach(btn => {
+        btn.addEventListener('click', () => deleteRecordHandlerSuporte(btn.getAttribute('data-id')));
+    });
+}
+
+// Visualizar registro
+async function viewRecordSuporte(id) {
+    try {
+        const doc = await db.collection('erros_suporte').doc(id).get();
+        
+        if (doc.exists) {
+            const record = doc.data();
+            
+            document.getElementById('viewCode').textContent = record.code;
+            document.getElementById('viewLocation').textContent = record.location || 'Não informado';
+            document.getElementById('viewDescription').textContent = record.description;
+            document.getElementById('viewCorrection').textContent = record.correction;
+            document.getElementById('viewNotes').textContent = record.notes || 'Nenhuma anotação';
+            document.getElementById('viewCreatedAt').textContent = formatDate(record.createdAt);
+            document.getElementById('viewUpdatedAt').textContent = formatDate(record.updatedAt);
+            
+            // Armazenar o ID do registro para uso no botão "Editar"
+            document.getElementById('viewModal').setAttribute('data-current-id', id);
+            
+            openViewModalSuporte();
+        }
+    } catch (error) {
+        console.error("Erro ao visualizar registro:", error);
+        showToast('Erro ao carregar registro', 'error');
+    }
+}
+
+// Manipulador para exclusão de registro
+async function deleteRecordHandlerSuporte(id) {
+    if (confirm('Tem certeza que deseja excluir este registro?')) {
+        try {
+            await deleteRecordSuporte(id);
+            await carregarRegistrosSuporte();
+            showToast('Registro excluído com sucesso!', 'success');
+        } catch (error) {
+            console.error("Erro ao excluir registro:", error);
+            showToast('Erro ao excluir registro', 'error');
+        }
+    }
+}
+
+// Abrir modal para edição
+async function editRecordSuporte(id) {
+    try {
+        const doc = await db.collection('erros_suporte').doc(id).get();
+        
+        if (doc.exists) {
+            const record = doc.data();
+            
+            document.getElementById('recordId').value = id;
+            document.getElementById('code').value = record.code;
+            document.getElementById('location').value = record.location || '';
+            document.getElementById('description').value = record.description;
+            document.getElementById('correction').value = record.correction;
+            document.getElementById('notes').value = record.notes || '';
+            
+            // Desabilitar opção de código automático na edição
+            document.getElementById('autoCode').disabled = true;
+            document.getElementById('autoCodeInfo').style.display = 'none';
+            
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Registro';
+            openModalSuporte();
+        }
+    } catch (error) {
+        console.error("Erro ao carregar registro para edição:", error);
+        showToast('Erro ao carregar registro', 'error');
+    }
+}
+
+// Abrir modal para novo registro
+async function newRecordSuporte() {
+    document.getElementById('recordForm').reset();
+    document.getElementById('recordId').value = '';
+    document.getElementById('autoCode').disabled = false;
+    document.getElementById('autoCode').checked = false;
+    document.getElementById('autoCodeInfo').style.display = 'none';
+    document.getElementById('code').disabled = false;
+    
+    document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Novo Registro';
+    openModalSuporte();
+}
+
+// Abrir modal de edição/criação
+function openModalSuporte() {
+    document.getElementById('recordModal').style.display = 'flex';
+}
+
+// Fechar modal de edição/criação
+function closeModalSuporte() {
+    document.getElementById('recordModal').style.display = 'none';
+}
+
+// Abrir modal de visualização
+function openViewModalSuporte() {
+    document.getElementById('viewModal').style.display = 'flex';
+}
+
+// Fechar modal de visualização
+function closeViewModalSuporte() {
+    document.getElementById('viewModal').style.display = 'none';
+}
+
+// Carregar registros
+async function carregarRegistrosSuporte() {
+    try {
+        const records = await getAllRecordsSuporte();
+        renderTableSuporte(records);
+    } catch (error) {
+        console.error("Erro ao carregar registros:", error);
+    }
+}
+
+// Inicializar sistema de suporte
+function initializeSuporteSystem() {
+    // Event listeners
+    document.getElementById('newRecordBtn').addEventListener('click', newRecordSuporte);
+    
+    document.getElementById('searchInputSuporte').addEventListener('input', async function() {
+        const results = await searchRecordsSuporte(this.value);
+        renderTableSuporte(results);
+    });
+    
+    // Controle do checkbox de código automático
+    document.getElementById('autoCode').addEventListener('change', async function() {
+        const codeInput = document.getElementById('code');
+        const autoCodeInfo = document.getElementById('autoCodeInfo');
+        
+        if (this.checked) {
+            const autoCode = await generateAutoCode();
+            codeInput.value = autoCode;
+            codeInput.disabled = true;
+            document.getElementById('codePreview').textContent = autoCode;
+            autoCodeInfo.style.display = 'block';
+        } else {
+            codeInput.value = '';
+            codeInput.disabled = false;
+            autoCodeInfo.style.display = 'none';
+        }
+    });
+    
+    // Fechar modais
+    document.querySelectorAll('.close').forEach(closeBtn => {
+        closeBtn.addEventListener('click', function() {
+            if (this.closest('#recordModal')) {
+                closeModalSuporte();
+            } else if (this.closest('#viewModal')) {
+                closeViewModalSuporte();
+            }
+        });
+    });
+    
+    document.getElementById('cancelBtn').addEventListener('click', closeModalSuporte);
+    document.getElementById('closeViewBtn').addEventListener('click', closeViewModalSuporte);
+    
+    // Botão "Editar" no modal de visualização
+    document.getElementById('editFromViewBtn').addEventListener('click', function() {
+        const id = document.getElementById('viewModal').getAttribute('data-current-id');
+        closeViewModalSuporte();
+        editRecordSuporte(id);
+    });
+    
+    // Salvar formulário
+    document.getElementById('recordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const record = {
+            id: document.getElementById('recordId').value || null,
+            code: document.getElementById('code').value,
+            location: document.getElementById('location').value,
+            description: document.getElementById('description').value,
+            correction: document.getElementById('correction').value,
+            notes: document.getElementById('notes').value
+        };
+        
+        try {
+            await saveRecordSuporte(record);
+            await carregarRegistrosSuporte();
+            closeModalSuporte();
+            showToast('Registro salvo com sucesso!', 'success');
+        } catch (error) {
+            console.error("Erro ao salvar registro:", error);
+            showToast('Erro ao salvar registro', 'error');
+        }
+    });
+    
+    // Fechar modais ao clicar fora deles
+    window.addEventListener('click', function(e) {
+        if (e.target === document.getElementById('recordModal')) {
+            closeModalSuporte();
+        } else if (e.target === document.getElementById('viewModal')) {
+            closeViewModalSuporte();
+        }
+    });
+}
 
 // Aplicar configuração ao carregar a página
 document.addEventListener('DOMContentLoaded', function() {

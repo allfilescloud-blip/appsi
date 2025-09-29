@@ -31,6 +31,9 @@
                     <button id="btnNavListagem" class="nav-btn">
                         <i class="fas fa-list"></i> Chamados
                     </button>
+                    <button id="btnNavSuporte" class="nav-btn">
+                        <i class="fas fa-life-ring"></i> Suporte
+                    </button>
                 </div>
             </div>
             
@@ -322,7 +325,7 @@
                             <option value="">Selecione o marketplace</option>
                             <option value="Mercado Livre">Mercado Livre</option>
                             <option value="Amazon">Amazon</option>
-							<option value="Amazon">Interno</option>
+                            <option value="Interno">Interno</option>
                         </select>
                     </div>
                     
@@ -498,44 +501,44 @@
             </div>
         </div>
         
-		<!-- Página de Verificação (inicialmente oculta) -->
-		<div id="paginaVerificacao" class="hidden">
-			<button id="btnVoltarVerificacao" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
-			
-			<div class="verificacao-header">
-				<h2>Verificação de Pedidos - Hub Ideris</h2>
-				<button id="btnAtualizarVerificacao" class="btn"><i class="fas fa-sync-alt"></i> Atualizar</button>
-			</div>
-			
-			<div class="verificacao-container">
-				<div class="verificacao-input">
-					<input type="text" id="verificacaoPedido" placeholder="Digite ou escaneie o código do pedido" autofocus>
-					<button id="btnBuscarVerificacao" class="btn" disabled><i class="fas fa-search"></i> Buscar</button>
-					<button id="btnLimparVerificacao" class="btn voltar"><i class="fas fa-times"></i> Limpar</button>
-				</div>
-				
-				<!-- NOVA CAIXA DE SELEÇÃO PARA VERIFICAR DUPLICADOS -->
-				<div class="verificacao-opcoes">
-					<label class="checkbox-container">
-						<input type="checkbox" id="verificarDuplicados">
-						<span class="checkmark"></span>
-						Verificar apenas duplicados (não consulta API)
-					</label>
-				</div>
-				
-				<div class="verificacao-status" id="verificacaoStatus">Aguardando autenticação...</div>
-				
-				<div class="verificacao-resultado">
-					<div class="verificacao-codigo">—</div>
-					<div class="verificacao-statusDesc">—</div>
-				</div>
-				
-				<div class="verificacao-lista">
-					<h2>Pedidos já verificados:</h2>
-					<ul id="verificacaoListaLidos"></ul>
-				</div>
-			</div>
-		</div>
+        <!-- Página de Verificação (inicialmente oculta) -->
+        <div id="paginaVerificacao" class="hidden">
+            <button id="btnVoltarVerificacao" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            
+            <div class="verificacao-header">
+                <h2>Verificação de Pedidos - Hub Ideris</h2>
+                <button id="btnAtualizarVerificacao" class="btn"><i class="fas fa-sync-alt"></i> Atualizar</button>
+            </div>
+            
+            <div class="verificacao-container">
+                <div class="verificacao-input">
+                    <input type="text" id="verificacaoPedido" placeholder="Digite ou escaneie o código do pedido" autofocus>
+                    <button id="btnBuscarVerificacao" class="btn" disabled><i class="fas fa-search"></i> Buscar</button>
+                    <button id="btnLimparVerificacao" class="btn voltar"><i class="fas fa-times"></i> Limpar</button>
+                </div>
+                
+                <!-- NOVA CAIXA DE SELEÇÃO PARA VERIFICAR DUPLICADOS -->
+                <div class="verificacao-opcoes">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="verificarDuplicados">
+                        <span class="checkmark"></span>
+                        Verificar apenas duplicados (não consulta API)
+                    </label>
+                </div>
+                
+                <div class="verificacao-status" id="verificacaoStatus">Aguardando autenticação...</div>
+                
+                <div class="verificacao-resultado">
+                    <div class="verificacao-codigo">—</div>
+                    <div class="verificacao-statusDesc">—</div>
+                </div>
+                
+                <div class="verificacao-lista">
+                    <h2>Pedidos já verificados:</h2>
+                    <ul id="verificacaoListaLidos"></ul>
+                </div>
+            </div>
+        </div>
         
         <!-- Página de Configurações (inicialmente oculta) -->
         <div id="paginaConfiguracoes" class="hidden">
@@ -597,6 +600,150 @@
                         </thead>
                         <tbody></tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Página de Suporte (inicialmente oculta) -->
+        <div id="paginaSuporte" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2><i class="fas fa-bug"></i> Sistema de Cadastro de Erros</h2>
+            </div>
+            
+            <div class="suporte-container">
+                <div class="actions">
+                    <div class="search-box">
+                        <input type="text" id="searchInputSuporte" placeholder="Pesquisar por código, descrição ou local...">
+                    </div>
+                    <button class="btn btn-primary" id="newRecordBtn">
+                        <i class="fas fa-plus-circle"></i> Novo Registro
+                    </button>
+                </div>
+                
+                <!-- Tabela para Desktop -->
+                <div class="table-container">
+                    <table id="errorsTable">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Local</th>
+                                <th>Descrição do Erro</th>
+                                <th>Correção</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="errorsTableBody">
+                            <!-- Os registros serão inseridos aqui dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Cards para Mobile -->
+                <div class="mobile-list" id="mobileErrorsList">
+                    <!-- Cards para dispositivos móveis serão inseridos aqui -->
+                </div>
+                
+                <div id="noResultsSuporte" class="no-results" style="display: none;">
+                    <i class="fas fa-search"></i> Nenhum registro encontrado.
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para adicionar/editar registros -->
+        <div id="recordModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle"><i class="fas fa-edit"></i> Novo Registro</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <form id="recordForm">
+                    <input type="hidden" id="recordId">
+                    <div class="form-group">
+                        <label for="code"><i class="fas fa-code"></i> Código</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="autoCode">
+                            <label for="autoCode">Gerar código automaticamente</label>
+                        </div>
+                        <input type="text" id="code" class="form-control" required maxlength="7">
+                        <div id="autoCodeInfo" class="auto-code-info" style="display: none;">
+                            <i class="fas fa-info-circle"></i> Será gerado um código no formato: 
+                            <span class="code-preview" id="codePreview"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="location"><i class="fas fa-map-marker-alt"></i> Local</label>
+                        <input type="text" id="location" class="form-control" placeholder="Ex: Sistema de Vendas, Módulo Financeiro, API de Integração...">
+                    </div>
+                    <div class="form-group">
+                        <label for="description"><i class="fas fa-exclamation-circle"></i> Descrição do Erro</label>
+                        <textarea id="description" class="form-control" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="correction"><i class="fas fa-wrench"></i> Correção</label>
+                        <textarea id="correction" class="form-control" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes"><i class="fas fa-sticky-note"></i> Anotações</label>
+                        <textarea id="notes" class="form-control"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelBtn">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success" id="saveBtn">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para visualização rápida -->
+        <div id="viewModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="viewModalTitle"><i class="fas fa-eye"></i> Detalhes do Erro</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="view-content">
+                    <div class="view-field">
+                        <div class="view-label"><i class="fas fa-code"></i> Código</div>
+                        <div class="view-value" id="viewCode"></div>
+                    </div>
+                    <div class="view-field">
+                        <div class="view-label"><i class="fas fa-map-marker-alt"></i> Local</div>
+                        <div class="view-value" id="viewLocation"></div>
+                    </div>
+                    <div class="view-field">
+                        <div class="view-label"><i class="fas fa-exclamation-circle"></i> Descrição do Erro</div>
+                        <div class="view-value" id="viewDescription"></div>
+                    </div>
+                    <div class="view-field">
+                        <div class="view-label"><i class="fas fa-wrench"></i> Correção</div>
+                        <div class="view-value" id="viewCorrection"></div>
+                    </div>
+                    <div class="view-field">
+                        <div class="view-label"><i class="fas fa-sticky-note"></i> Anotações</div>
+                        <div class="view-value" id="viewNotes"></div>
+                    </div>
+                    <div class="dates-info">
+                        <div class="date-item">
+                            <i class="fas fa-plus-circle" style="color: #28a745;"></i>
+                            <span><strong>Criado em:</strong> <span id="viewCreatedAt"></span></span>
+                        </div>
+                        <div class="date-item">
+                            <i class="fas fa-edit" style="color: #007bff;"></i>
+                            <span><strong>Última alteração:</strong> <span id="viewUpdatedAt"></span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="closeViewBtn">
+                        <i class="fas fa-times"></i> Fechar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="editFromViewBtn">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
                 </div>
             </div>
         </div>
