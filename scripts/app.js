@@ -1000,7 +1000,8 @@ formChamado.addEventListener('submit', async function(e) {
                 {
                     data: new Date().toISOString(),
                     autor: responsavelField.value,
-                    mensagem: `Chamado aberto por ${responsavelField.value}`
+                    mensagem: `Chamado aberto por ${userData.nome}`
+                    // ${responsavelField.value}
                 }
             ],
             userId: user.uid
