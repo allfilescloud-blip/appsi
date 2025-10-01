@@ -2344,7 +2344,7 @@ async function deleteRecordHandlerSuporte(id) {
     }
 }
 
-// Abrir modal para edição
+// Abrir modal para edição - MANTIDO (checkbox MARCADO e travado)
 async function editRecordSuporte(id) {
     try {
         const doc = await db.collection('erros_suporte').doc(id).get();
@@ -2359,9 +2359,18 @@ async function editRecordSuporte(id) {
             document.getElementById('correction').value = record.correction;
             document.getElementById('notes').value = record.notes || '';
             
-            // Desabilitar opção de código automático na edição
-            document.getElementById('autoCode').disabled = true;
-            document.getElementById('autoCodeInfo').style.display = 'none';
+            // MANTIDO: Durante edição, checkbox MARCADO e travado
+            const autoCodeCheckbox = document.getElementById('autoCode');
+            const codeInput = document.getElementById('code');
+            
+            autoCodeCheckbox.checked = true; // MARCADO na edição
+            autoCodeCheckbox.disabled = true; // Travado durante edição
+            
+            codeInput.disabled = true; // Código não editável
+            codeInput.maxLength = 7;
+            
+            document.getElementById('codePreview').textContent = record.code;
+            document.getElementById('autoCodeInfo').style.display = 'block';
             
             document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Registro';
             openModalSuporte();
@@ -2372,14 +2381,27 @@ async function editRecordSuporte(id) {
     }
 }
 
-// Abrir modal para novo registro
+// Abrir modal para novo registro - VERSÃO CORRIGIDA (checkbox DESMARCADO por padrão)
 async function newRecordSuporte() {
     document.getElementById('recordForm').reset();
     document.getElementById('recordId').value = '';
-    document.getElementById('autoCode').disabled = false;
-    document.getElementById('autoCode').checked = false;
+    
+    // CONFIGURAÇÃO CORRIGIDA: Checkbox DESMARCADO por padrão
+    const codeInput = document.getElementById('code');
+    const autoCodeCheckbox = document.getElementById('autoCode');
+    
+    // NOVO: Checkbox DESMARCADO por padrão
+    autoCodeCheckbox.checked = false;
+    autoCodeCheckbox.disabled = false;
+    
+    // Configuração para código manual
+    codeInput.value = '';
+    codeInput.disabled = false;
+    codeInput.maxLength = 15; // Limite de 15 caracteres para manual
+    codeInput.placeholder = 'Digite o código (máx. 15 caracteres)';
+    codeInput.focus(); // Foca no campo para digitação
+    
     document.getElementById('autoCodeInfo').style.display = 'none';
-    document.getElementById('code').disabled = false;
     
     document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Novo Registro';
     openModalSuporte();
@@ -2415,7 +2437,7 @@ async function carregarRegistrosSuporte() {
     }
 }
 
-// Inicializar sistema de suporte
+// Função para inicializar sistema de suporte - VERSÃO MELHORADA
 function initializeSuporteSystem() {
     // Event listeners
     document.getElementById('newRecordBtn').addEventListener('click', newRecordSuporte);
@@ -2425,7 +2447,7 @@ function initializeSuporteSystem() {
         renderTableSuporte(results);
     });
     
-    // Controle do checkbox de código automático
+    // Controle do checkbox de código automático - MELHORADO
     document.getElementById('autoCode').addEventListener('change', async function() {
         const codeInput = document.getElementById('code');
         const autoCodeInfo = document.getElementById('autoCodeInfo');
@@ -2434,12 +2456,23 @@ function initializeSuporteSystem() {
             const autoCode = await generateAutoCode();
             codeInput.value = autoCode;
             codeInput.disabled = true;
+            codeInput.maxLength = 7; // Mantém para código automático
             document.getElementById('codePreview').textContent = autoCode;
             autoCodeInfo.style.display = 'block';
         } else {
             codeInput.value = '';
             codeInput.disabled = false;
+            codeInput.maxLength = 15; // NOVO: Limite de 15 caracteres para manual
+            codeInput.focus();
             autoCodeInfo.style.display = 'none';
+        }
+    });
+    
+    // NOVO: Validação em tempo real para limite de caracteres
+    document.getElementById('code').addEventListener('input', function() {
+        if (!document.getElementById('autoCode').checked && this.value.length > 15) {
+            this.value = this.value.substring(0, 15);
+            showToast('Código limitado a 15 caracteres', 'warning');
         }
     });
     
@@ -2468,9 +2501,18 @@ function initializeSuporteSystem() {
     document.getElementById('recordForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
+        // NOVO: Validação final do código manual
+        const codeValue = document.getElementById('code').value;
+        const isAutoCode = document.getElementById('autoCode').checked;
+        
+        if (!isAutoCode && codeValue.length > 15) {
+            showToast('Código não pode ter mais de 15 caracteres', 'error');
+            return;
+        }
+        
         const record = {
             id: document.getElementById('recordId').value || null,
-            code: document.getElementById('code').value,
+            code: codeValue,
             location: document.getElementById('location').value,
             description: document.getElementById('description').value,
             correction: document.getElementById('correction').value,
@@ -2497,7 +2539,6 @@ function initializeSuporteSystem() {
         }
     });
 }
-
 // Aplicar configuração ao carregar a página
 document.addEventListener('DOMContentLoaded', function() {
     aplicarConfiguracaoOcultarCadastro();
