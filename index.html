@@ -686,7 +686,28 @@
                         <label for="notes"><i class="fas fa-sticky-note"></i> Anotações</label>
                         <textarea id="notes" class="form-control"></textarea>
                     </div>
-                    <div class="form-actions">
+					<!-- Área de upload de imagens -->
+					<div class="form-group">
+						<label for="imageUpload"><i class="fas fa-images"></i> Imagens do Erro (Máx. 3 imagens)</label>
+						
+						<div class="upload-area" id="imageUploadArea" style="min-height: 100px;">
+							<i class="fas fa-cloud-upload-alt upload-icon"></i>
+							<p class="upload-text">Arraste imagens aqui ou clique para selecionar</p>
+							<label class="upload-button">
+								<i class="fas fa-plus"></i> Selecionar Imagens
+								<input type="file" id="imageUpload" accept="image/*" multiple 
+									   style="display: none;" aria-label="Selecionar imagens">
+							</label>
+						</div>
+						
+						<div class="image-preview" id="imagePreview" style="display: none; margin-top: 15px;">
+							<div class="image-thumbs" id="imageThumbs"></div>
+						</div>
+						
+						<div class="upload-status" id="imageUploadStatus" style="margin-top: 10px;"></div>
+					</div>
+					
+					                    <div class="form-actions">
                         <button type="button" class="btn btn-secondary" id="cancelBtn">
                             <i class="fas fa-times"></i> Cancelar
                         </button>
@@ -748,6 +769,18 @@
             </div>
         </div>
     </div>
+	
+	<!-- Modal para visualização de imagem -->
+	<div id="imageModal" class="image-modal">
+		<button class="image-modal-close">&times;</button>
+		<button class="image-modal-nav image-modal-prev">
+			<i class="fas fa-chevron-left"></i>
+		</button>
+		<img class="image-modal-content" id="expandedImage">
+		<button class="image-modal-nav image-modal-next">
+			<i class="fas fa-chevron-right"></i>
+		</button>
+	</div>
 
     <script src="scripts/firebase-config.js"></script>
     <script src="scripts/ideris-api.js"></script>

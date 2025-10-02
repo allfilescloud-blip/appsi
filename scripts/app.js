@@ -170,6 +170,11 @@ let totalTamanhoArquivosInteracao = 0;
 let responsavelAlterado = false;
 let verificarApenasDuplicados = false;
 
+// Variáveis para upload de imagens
+let imagensSelecionadas = [];
+let MAX_IMAGENS = 3;
+let MAX_TAMANHO_IMAGEM = 2 * 1024 * 1024; // 2MB
+
 // Variáveis para verificação de pedidos
 let pedidosVerificados = [];
 
@@ -2136,38 +2141,119 @@ async function getAllRecordsSuporte() {
     }
 }
 
-// Salvar registro
+// Função para salvar registro - VERSÃO COM CONFIRMAÇÕES COMPLETAS
 async function saveRecordSuporte(record) {
     try {
+        showToast('Salvando registro...', 'info');
         const currentDate = new Date().toISOString();
-        
-        // Remove o campo 'id' do objeto que será salvo
         const { id, ...dataToSave } = record;
         
+        let recordData = {
+            ...dataToSave,
+            updatedAt: currentDate
+        };
+
         if (id) {
-            // Atualizar registro existente
-            await db.collection('erros_suporte').doc(id).update({
-                ...dataToSave,
-                updatedAt: currentDate
-            });
-            return { id, ...dataToSave, updatedAt: currentDate };
+            // EDITAR REGISTRO EXISTENTE
+            const docAtual = await db.collection('erros_suporte').doc(id).get();
+            const registroAtual = docAtual.data();
+            const imagensAntigas = registroAtual.imagens || [];
+            
+            // Identificar imagens que foram removidas
+            const imagensRemovidas = imagensAntigas.filter(imgAntiga => 
+                !imagensSelecionadas.some(imgNova => imgNova.url === imgAntiga.url)
+            );
+            
+            // Deletar imagens removidas do Storage
+            if (imagensRemovidas.length > 0) {
+                showToast(`Excluindo ${imagensRemovidas.length} imagem(ns) removida(s)...`, 'info');
+                await deletarImagens(imagensRemovidas);
+            }
+            
+            // Upload de novas imagens
+            const novasImagens = [];
+            const novasImagensCount = imagensSelecionadas.filter(img => !img.isExisting).length;
+            
+            if (novasImagensCount > 0) {
+                showToast(`Enviando ${novasImagensCount} nova(s) imagem(ns)...`, 'info');
+            }
+            
+            for (const imagem of imagensSelecionadas) {
+                if (!imagem.isExisting) {
+                    const imagemUploaded = await uploadImagem(id, imagem);
+                    novasImagens.push(imagemUploaded);
+                } else {
+                    novasImagens.push(imagem);
+                }
+            }
+            
+            // Atualizar com as imagens finais
+            recordData.imagens = novasImagens;
+            await db.collection('erros_suporte').doc(id).update(recordData);
+            
+            showToast('Registro atualizado com sucesso!', 'success');
+            return { id, ...recordData };
+            
         } else {
-            // Adicionar novo registro
+            // NOVO REGISTRO
             const docRef = await db.collection('erros_suporte').add({
-                ...dataToSave,
-                createdAt: currentDate,
-                updatedAt: currentDate
+                ...recordData,
+                createdAt: currentDate
             });
-            // Retorna sem o campo 'id' no nível raiz dos dados
+            
+            // Upload de imagens para o novo registro
+            if (imagensSelecionadas.length > 0) {
+                showToast(`Enviando ${imagensSelecionadas.length} imagem(ns)...`, 'info');
+                
+                const imagens = [];
+                for (const imagem of imagensSelecionadas) {
+                    const imagemUploaded = await uploadImagem(docRef.id, imagem);
+                    imagens.push(imagemUploaded);
+                }
+                
+                await db.collection('erros_suporte').doc(docRef.id).update({
+                    imagens: imagens
+                });
+                recordData.imagens = imagens;
+            }
+            
+            showToast('Registro criado com sucesso!', 'success');
             return { 
                 id: docRef.id, 
-                ...dataToSave,
-                createdAt: currentDate,
-                updatedAt: currentDate 
+                ...recordData,
+                createdAt: currentDate 
             };
         }
     } catch (error) {
         console.error("Erro ao salvar registro:", error);
+        showToast(`Erro ao salvar registro: ${error.message}`, 'error');
+        throw error;
+    }
+}
+
+// Função para upload de uma única imagem - VERSÃO COM CONFIRMAÇÕES
+async function uploadImagem(recordId, imagem) {
+    try {
+        // showToast(`Enviando imagem: ${imagem.nome}...`, 'info');
+        
+        const extensao = imagem.nome.split('.').pop();
+        const nomeArquivo = `suporte/${recordId}/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${extensao}`;
+        const storageRef = storage.ref().child(nomeArquivo);
+        
+        const snapshot = await storageRef.put(imagem.file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+        
+        // showToast(`Imagem ${imagem.nome} enviada com sucesso!`, 'success');
+        
+        return {
+            nome: imagem.nome,
+            url: downloadURL,
+            caminho: nomeArquivo,
+            tamanho: imagem.tamanho
+        };
+    } catch (error) {
+        console.error('Erro ao fazer upload da imagem:', error);
+        showToast(`Erro ao enviar "${imagem.nome}": ${error.message}`, 'error');
         throw error;
     }
 }
@@ -2303,7 +2389,7 @@ function attachEventListenersSuporte() {
     });
 }
 
-// Visualizar registro
+// Visualizar registro - VERSÃO CORRIGIDA COM IMAGENS
 async function viewRecordSuporte(id) {
     try {
         const doc = await db.collection('erros_suporte').doc(id).get();
@@ -2311,6 +2397,7 @@ async function viewRecordSuporte(id) {
         if (doc.exists) {
             const record = doc.data();
             
+            // Preencher campos básicos
             document.getElementById('viewCode').textContent = record.code;
             document.getElementById('viewLocation').textContent = record.location || 'Não informado';
             document.getElementById('viewDescription').textContent = record.description;
@@ -2318,6 +2405,42 @@ async function viewRecordSuporte(id) {
             document.getElementById('viewNotes').textContent = record.notes || 'Nenhuma anotação';
             document.getElementById('viewCreatedAt').textContent = formatDate(record.createdAt);
             document.getElementById('viewUpdatedAt').textContent = formatDate(record.updatedAt);
+            
+            // CORREÇÃO: Remover seção de imagens anterior se existir
+            const existingImagesSection = document.getElementById('viewImagesSection');
+            if (existingImagesSection) {
+                existingImagesSection.remove();
+            }
+            
+            // CORREÇÃO: Criar nova seção de imagens
+            const viewContent = document.querySelector('.view-content');
+            const imagesSection = document.createElement('div');
+            imagesSection.className = 'view-field';
+            imagesSection.id = 'viewImagesSection';
+            
+            let imagesHTML = '';
+            if (record.imagens && record.imagens.length > 0) {
+                imagesHTML = `
+                    <div class="view-label"><i class="fas fa-images"></i> Imagens (${record.imagens.length})</div>
+                    <div class="image-thumbs">
+                        ${record.imagens.map((img, index) => `
+                            <div class="image-thumb">
+                                <img src="${img.url}" alt="${img.nome}" 
+                                     onclick="expandViewImage('${img.url}')"
+                                     style="cursor: pointer;">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                imagesHTML = `
+                    <div class="view-label"><i class="fas fa-images"></i> Imagens</div>
+                    <div class="view-value">Nenhuma imagem anexada</div>
+                `;
+            }
+            
+            imagesSection.innerHTML = imagesHTML;
+            viewContent.appendChild(imagesSection);
             
             // Armazenar o ID do registro para uso no botão "Editar"
             document.getElementById('viewModal').setAttribute('data-current-id', id);
@@ -2328,6 +2451,34 @@ async function viewRecordSuporte(id) {
         console.error("Erro ao visualizar registro:", error);
         showToast('Erro ao carregar registro', 'error');
     }
+}
+
+// Função para expandir imagem na visualização - VERSÃO CORRIGIDA
+function expandViewImage(imageUrl) {
+    const imageModal = document.getElementById('imageModal');
+    const expandedImage = document.getElementById('expandedImage');
+    const prevBtn = document.querySelector('.image-modal-prev');
+    const nextBtn = document.querySelector('.image-modal-next');
+    
+    expandedImage.src = imageUrl;
+    imageModal.style.display = 'flex';
+    
+    // CORREÇÃO: Esconder navegação na visualização (apenas uma imagem)
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    
+    // CORREÇÃO: Fechar modal ao clicar no X ou fora da imagem
+    const closeModal = () => {
+        imageModal.style.display = 'none';
+        // Restaurar navegação para quando for usado na edição
+        prevBtn.style.display = 'flex';
+        nextBtn.style.display = 'flex';
+    };
+    
+    document.querySelector('.image-modal-close').onclick = closeModal;
+    imageModal.onclick = (e) => {
+        if (e.target === imageModal) closeModal();
+    };
 }
 
 // Manipulador para exclusão de registro
@@ -2341,6 +2492,265 @@ async function deleteRecordHandlerSuporte(id) {
             console.error("Erro ao excluir registro:", error);
             showToast('Erro ao excluir registro', 'error');
         }
+    }
+}
+
+// Função para inicializar sistema de upload de imagens
+function initializeImageUpload() {
+    const imageUpload = document.getElementById('imageUpload');
+    const imageUploadArea = document.getElementById('imageUploadArea');
+    
+    // Event listeners para upload
+    imageUpload.addEventListener('change', handleImageSelect);
+    
+    imageUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        imageUploadArea.classList.add('dragover');
+    });
+    
+    imageUploadArea.addEventListener('dragleave', () => {
+        imageUploadArea.classList.remove('dragover');
+    });
+    
+	// Modifique a parte do drag & drop na initializeImageUpload():
+	imageUploadArea.addEventListener('drop', (e) => {
+		e.preventDefault();
+		imageUploadArea.classList.remove('dragover');
+		handleImageSelect({ target: { files: e.dataTransfer.files } });
+		// showToast('Imagens soltas com sucesso!', 'success');
+	});
+    
+    // Modal de visualização
+    const imageModal = document.getElementById('imageModal');
+    const closeModal = imageModal.querySelector('.image-modal-close');
+    
+    closeModal.addEventListener('click', () => {
+        imageModal.style.display = 'none';
+    });
+    
+    imageModal.addEventListener('click', (e) => {
+        if (e.target === imageModal) {
+            imageModal.style.display = 'none';
+        }
+    });
+}
+
+// Função para lidar com seleção de imagens - VERSÃO COM CONFIRMAÇÕES
+function handleImageSelect(e) {
+    const files = Array.from(e.target.files);
+    
+    // Verificar arquivos inválidos
+    const invalidFiles = files.filter(file => 
+        !file.type.startsWith('image/')
+    );
+    
+    const largeFiles = files.filter(file => 
+        file.size > MAX_TAMANHO_IMAGEM
+    );
+    
+    const validFiles = files.filter(file => 
+        file.type.startsWith('image/') && file.size <= MAX_TAMANHO_IMAGEM
+    );
+    
+    // Mostrar alertas para arquivos problemáticos
+    if (invalidFiles.length > 0) {
+        showToast(`${invalidFiles.length} arquivo(s) ignorado(s) - apenas imagens são permitidas`, 'error');
+    }
+    
+    if (largeFiles.length > 0) {
+        showToast(`${largeFiles.length} imagem(s) muito grande(s) - máximo 2MB por imagem`, 'error');
+    }
+    
+    if (validFiles.length === 0) {
+        if (files.length > 0) {
+            showToast('Nenhuma imagem válida selecionada', 'warning');
+        }
+        return;
+    }
+    
+    if (imagensSelecionadas.length + validFiles.length > MAX_IMAGENS) {
+        showToast(`Máximo de ${MAX_IMAGENS} imagens permitidas. Você já tem ${imagensSelecionadas.length} imagem(ns) selecionada(s).`, 'error');
+        return;
+    }
+    
+    let loadedCount = 0;
+    validFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagensSelecionadas.push({
+                file: file,
+                url: e.target.result,
+                nome: file.name,
+                tamanho: file.size
+            });
+            loadedCount++;
+            
+            if (loadedCount === validFiles.length) {
+                updateImagePreview();
+                // showToast(`${validFiles.length} imagem(ns) adicionada(s) com sucesso!`, 'success');
+            }
+        };
+        reader.onerror = () => {
+            showToast(`Erro ao carregar a imagem ${file.name}`, 'error');
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    // Limpa o input para permitir selecionar as mesmas imagens novamente
+    e.target.value = '';
+}
+
+// Função para atualizar a pré-visualização das imagens
+function updateImagePreview() {
+    const imagePreview = document.getElementById('imagePreview');
+    const imageThumbs = document.getElementById('imageThumbs');
+    const uploadStatus = document.getElementById('imageUploadStatus');
+    
+    imageThumbs.innerHTML = '';
+    
+    if (imagensSelecionadas.length === 0) {
+        imagePreview.style.display = 'none';
+        uploadStatus.textContent = 'Nenhuma imagem selecionada';
+        return;
+    }
+    
+    imagePreview.style.display = 'block';
+    uploadStatus.textContent = `${imagensSelecionadas.length} de ${MAX_IMAGENS} imagens selecionadas`;
+    
+    imagensSelecionadas.forEach((imagem, index) => {
+        const thumb = document.createElement('div');
+        thumb.className = 'image-thumb';
+        thumb.innerHTML = `
+            <img src="${imagem.url}" alt="${imagem.nome}">
+            <button type="button" class="image-thumb-remove" data-index="${index}">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        // Evento para visualizar imagem
+        thumb.querySelector('img').addEventListener('click', () => {
+            expandImage(index);
+        });
+        
+        // Evento para remover imagem
+        thumb.querySelector('.image-thumb-remove').addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeImage(index);
+        });
+        
+        imageThumbs.appendChild(thumb);
+    });
+}
+
+// Função para remover imagem - VERSÃO COM CONFIRMAÇÕES VISUAIS
+function removeImage(index) {
+    const imagemRemovida = imagensSelecionadas[index];
+    
+    if (imagemRemovida.isExisting && imagemRemovida.caminho) {
+        if (confirm('Tem certeza que deseja remover esta imagem? Esta ação não pode ser desfeita.')) {
+            imagensSelecionadas.splice(index, 1);
+            updateImagePreview();
+            // showToast('Imagem removida da seleção. Será excluída permanentemente ao salvar.', 'warning');
+        }
+    } else {
+        imagensSelecionadas.splice(index, 1);
+        updateImagePreview();
+        showToast('Imagem removida da seleção', 'info');
+    }
+}
+
+// Função para expandir imagem
+function expandImage(index) {
+    const imageModal = document.getElementById('imageModal');
+    const expandedImage = document.getElementById('expandedImage');
+    const prevBtn = document.querySelector('.image-modal-prev');
+    const nextBtn = document.querySelector('.image-modal-next');
+    
+    let currentIndex = index;
+    
+    function showImage() {
+        expandedImage.src = imagensSelecionadas[currentIndex].url;
+    }
+    
+    showImage();
+    
+    // Navegação
+    prevBtn.onclick = () => {
+        currentIndex = (currentIndex - 1 + imagensSelecionadas.length) % imagensSelecionadas.length;
+        showImage();
+    };
+    
+    nextBtn.onclick = () => {
+        currentIndex = (currentIndex + 1) % imagensSelecionadas.length;
+        showImage();
+    };
+    
+    imageModal.style.display = 'flex';
+}
+
+// Função para fazer upload das imagens
+async function uploadImagens(recordId) {
+    const imagens = [];
+    
+    for (const imagem of imagensSelecionadas) {
+        try {
+            const extensao = imagem.nome.split('.').pop();
+            const nomeArquivo = `suporte/${recordId}/${Date.now()}_${Math.random().toString(36).substring(2, 15)}.${extensao}`;
+            const storageRef = storage.ref().child(nomeArquivo);
+            
+            const snapshot = await storageRef.put(imagem.file);
+            const downloadURL = await snapshot.ref.getDownloadURL();
+            
+            imagens.push({
+                nome: imagem.nome,
+                url: downloadURL,
+                caminho: nomeArquivo,
+                tamanho: imagem.tamanho
+            });
+        } catch (error) {
+            console.error('Erro ao fazer upload da imagem:', error);
+            showToast(`Erro ao enviar "${imagem.nome}"`, 'error');
+        }
+    }
+    
+    return imagens;
+}
+
+// Função para carregar imagens existentes - VERSÃO CORRIGIDA
+function carregarImagensExistentes(imagens) {
+    imagensSelecionadas = imagens.map(img => ({
+        url: img.url,
+        nome: img.nome,
+        tamanho: img.tamanho,
+        caminho: img.caminho, // ✅ AGORA INCLUI O CAMINHO
+        isExisting: true // ✅ MARCA COMO IMAGEM EXISTENTE
+    }));
+    updateImagePreview();
+}
+
+// Função para deletar imagens do storage - VERSÃO COM CONFIRMAÇÕES
+async function deletarImagens(imagens) {
+    let deletedCount = 0;
+    let errorCount = 0;
+    
+    for (const imagem of imagens) {
+        try {
+            await storage.ref().child(imagem.caminho).delete();
+            deletedCount++;
+            showToast(`Imagem ${imagem.nome} excluída permanentemente`, 'info');
+        } catch (error) {
+            console.error('Erro ao deletar imagem:', error);
+            errorCount++;
+            showToast(`Erro ao excluir "${imagem.nome}"`, 'error');
+        }
+    }
+    
+    if (deletedCount > 0) {
+        showToast(`${deletedCount} imagem(ns) excluída(s) permanentemente do sistema`, 'success');
+    }
+    
+    if (errorCount > 0) {
+        showToast(`${errorCount} imagem(ns) não puderam ser excluídas`, 'warning');
     }
 }
 
@@ -2375,6 +2785,18 @@ async function editRecordSuporte(id) {
             document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Registro';
             openModalSuporte();
         }
+		
+		// Carrega imagens existentes
+		if (record.imagens && record.imagens.length > 0) {
+			carregarImagensExistentes(record.imagens);
+		} else {
+			imagensSelecionadas = [];
+			updateImagePreview();
+		}
+
+		// Inicializa o upload de imagens
+		initializeImageUpload();
+		
     } catch (error) {
         console.error("Erro ao carregar registro para edição:", error);
         showToast('Erro ao carregar registro', 'error');
@@ -2405,6 +2827,13 @@ async function newRecordSuporte() {
     
     document.getElementById('modalTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Novo Registro';
     openModalSuporte();
+	
+	// Limpa as imagens selecionadas
+	imagensSelecionadas = [];
+	updateImagePreview();
+
+	// Inicializa o upload de imagens
+	initializeImageUpload();
 }
 
 // Abrir modal de edição/criação
@@ -2437,6 +2866,13 @@ async function carregarRegistrosSuporte() {
     }
 }
 
+// Função para limpar imagens selecionadas - VERSÃO CORRIGIDA
+function limparImagensSelecionadas() {
+    // IMPORTANTE: Não deleta imagens existentes, apenas limpa a seleção atual
+    imagensSelecionadas = imagensSelecionadas.filter(img => !img.isExisting);
+    updateImagePreview();
+}
+
 // Função para inicializar sistema de suporte - VERSÃO MELHORADA
 function initializeSuporteSystem() {
     // Event listeners
@@ -2447,6 +2883,9 @@ function initializeSuporteSystem() {
         renderTableSuporte(results);
     });
     
+	// CORREÇÃO: Inicializar sistema de imagens
+    initializeImageUpload();
+	
     // Controle do checkbox de código automático - MELHORADO
     document.getElementById('autoCode').addEventListener('change', async function() {
         const codeInput = document.getElementById('code');
@@ -2487,7 +2926,16 @@ function initializeSuporteSystem() {
         });
     });
     
-    document.getElementById('cancelBtn').addEventListener('click', closeModalSuporte);
+    document.getElementById('cancelBtn').addEventListener('click', function() {
+		limparImagensSelecionadas();
+		closeModalSuporte();
+	});
+	
+	document.querySelector('#recordModal .close').addEventListener('click', function() {
+		limparImagensSelecionadas();
+		closeModalSuporte();
+	});
+	
     document.getElementById('closeViewBtn').addEventListener('click', closeViewModalSuporte);
     
     // Botão "Editar" no modal de visualização
