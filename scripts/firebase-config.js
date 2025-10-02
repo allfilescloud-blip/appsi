@@ -1,12 +1,12 @@
 // Configuração do Firebase - será preenchida pelo GitHub Actions
 const firebaseConfig = {
-    apiKey: "AIzaSyDUn9T9CPmvVNq3EI1vmSnnT70Uj108nFM",
-    authDomain: "painelchamados-64246.firebaseapp.com",
-    projectId: "painelchamados-64246",
-    storageBucket: "painelchamados-64246.firebasestorage.app",
-    messagingSenderId: "957420790075",
-    appId: "1:957420790075:web:2fccf72f1d67c124df971e",
-    measurementId: "G-XJSB9Z35B0"
+    apiKey: "FIREBASE_API_KEY",
+    authDomain: "FIREBASE_AUTH_DOMAIN",
+    projectId: "FIREBASE_PROJECT_ID",
+    storageBucket: "FIREBASE_STORAGE_BUCKET",
+    messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
+    appId: "FIREBASE_APP_ID",
+    measurementId: "FIREBASE_MEASUREMENT_ID"
 };
 
 // Inicializar Firebase
