@@ -154,6 +154,21 @@ const viewNotes = document.getElementById('viewNotes');
 const viewCreatedAt = document.getElementById('viewCreatedAt');
 const viewUpdatedAt = document.getElementById('viewUpdatedAt');
 
+// Elementos da página Kanban
+const paginaKanban = document.getElementById('paginaKanban');
+const btnNavKanban = document.getElementById('btnNavKanban');
+const btnNovaTarefa = document.getElementById('btnNovaTarefa');
+const btnLimparKanban = document.getElementById('btnLimparKanban');
+const modalTarefa = document.getElementById('modalTarefa');
+const formTarefa = document.getElementById('formTarefa');
+const tarefaId = document.getElementById('tarefaId');
+const tarefaTitulo = document.getElementById('tarefaTitulo');
+const tarefaDescricao = document.getElementById('tarefaDescricao');
+const tarefaPrioridade = document.getElementById('tarefaPrioridade');
+const btnAddTodo = document.getElementById('btnAddTodo');
+const novaTarefaTodo = document.getElementById('novaTarefaTodo');
+const todoList = document.getElementById('todoList');
+
 // Variáveis globais
 let chamadoAtual = null;
 let user = null;
@@ -177,6 +192,11 @@ let MAX_TAMANHO_IMAGEM = 2 * 1024 * 1024; // 2MB
 
 // Variáveis para verificação de pedidos
 let pedidosVerificados = [];
+
+// Variáveis globais do Kanban
+let tarefas = [];
+let todoItems = [];
+let tarefaArrastada = null;
 
 // Tipos que exigem marketplace
 const tiposComMarketplace = ['Devolução', 'Reembolso', 'Fraude', 'Contatar MarketPlace'];
@@ -212,9 +232,15 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
+// Função auxiliar para capitalizar texto
+function capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 // Função para alternar entre páginas
 function mostrarPagina(pagina) {
-    // Esconder todas as páginas
+    // Esconder todas as páginas (ADICIONE paginaKanban NA LISTA)
     paginaDashboard.classList.add('hidden');
     paginaListagem.classList.add('hidden');
     paginaFormulario.classList.add('hidden');
@@ -223,6 +249,7 @@ function mostrarPagina(pagina) {
     paginaConfiguracoes.classList.add('hidden');
     paginaEstoque.classList.add('hidden');
     paginaSuporte.classList.add('hidden');
+    paginaKanban.classList.add('hidden'); // <- ADICIONE ESTA LINHA
     
     // Mostrar apenas a página solicitada
     pagina.classList.remove('hidden');
@@ -243,6 +270,9 @@ function mostrarPagina(pagina) {
         btnNavSuporte.classList.add('active');
         // Carregar registros quando acessar a página
         carregarRegistrosSuporte();
+    } else if (pagina === paginaKanban) { // <- ADICIONE ESTE BLOCO
+        btnNavKanban.classList.add('active');
+        atualizarContadores();
     }
 }
 
@@ -1730,6 +1760,10 @@ auth.onAuthStateChanged(async (firebaseUser) => {
 
         // Inicializar sistema de suporte
         initializeSuporteSystem();
+
+        // INICIALIZAR SISTEMA KANBAN - ADICIONE ESTA LINHA
+        inicializarKanban();
+
     } else {
         // Usuário não logado
         user = null;
@@ -1744,6 +1778,7 @@ auth.onAuthStateChanged(async (firebaseUser) => {
         paginaConfiguracoes.classList.add('hidden');
         paginaEstoque.classList.add('hidden');
         paginaSuporte.classList.add('hidden');
+        paginaKanban.classList.add('hidden'); // ADICIONE ESTA LINHA
         paginaLogin.classList.remove('hidden');
         
         // Aplicar configuração de ocultar cadastro
@@ -1766,6 +1801,11 @@ auth.onAuthStateChanged(async (firebaseUser) => {
             unsubscribeChamados();
             unsubscribeChamados = null;
         }
+
+        // LIMPAR DADOS DO KANBAN AO FAZER LOGOUT - ADICIONE ESTE BLOCO
+        tarefas = [];
+        todoItems = [];
+        tarefaArrastada = null;
     }
 });
 
@@ -1837,6 +1877,438 @@ toggleOcultarCadastro.addEventListener('change', function() {
         showToast('Opção de cadastro habilitada na tela de login', 'success');
     }
 });
+
+// ============================================
+// SISTEMA KANBAN - FUNÇÕES PRINCIPAIS
+// ============================================
+
+// Inicializar sistema Kanban
+function inicializarKanban() {
+    carregarTarefas();
+    carregarTodoList();
+    configurarEventosKanban();
+}
+
+// Configurar eventos do Kanban
+function configurarEventosKanban() {
+    // Navegação
+    btnNavKanban.addEventListener('click', () => {
+        mostrarPagina(paginaKanban);
+        atualizarContadores();
+    });
+
+    // Modal de tarefas
+    btnNovaTarefa.addEventListener('click', abrirModalTarefa);
+    document.getElementById('cancelarTarefa').addEventListener('click', fecharModalTarefa);
+    document.querySelector('#modalTarefa .close').addEventListener('click', fecharModalTarefa);
+
+    // Formulário de tarefa
+    formTarefa.addEventListener('submit', salvarTarefa);
+
+    // Todo List
+    btnAddTodo.addEventListener('click', adicionarTodo);
+    novaTarefaTodo.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') adicionarTodo();
+    });
+
+    // Limpar quadro
+    btnLimparKanban.addEventListener('click', limparQuadro);
+
+    // Fechar modal ao clicar fora
+    window.addEventListener('click', (e) => {
+        if (e.target === modalTarefa) fecharModalTarefa();
+    });
+}
+
+// Carregar tarefas do Firebase
+async function carregarTarefas() {
+    if (!user) return;
+
+    try {
+        // Consulta simplificada que não requer índice composto
+        const snapshot = await db.collection('kanban_tarefas')
+            .where('userId', '==', user.uid)
+            .get();
+
+        tarefas = [];
+        snapshot.forEach(doc => {
+            tarefas.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Ordenar localmente por data de criação
+        tarefas.sort((a, b) => new Date(b.dataCriacao) - new Date(a.dataCriacao));
+
+        renderizarTarefas();
+        atualizarContadores();
+    } catch (error) {
+        console.error('Erro ao carregar tarefas:', error);
+        showToast('Erro ao carregar tarefas', 'error');
+    }
+}
+
+// Carregar todo list do Firebase
+async function carregarTodoList() {
+    if (!user) return;
+
+    try {
+        // Consulta simplificada que não requer índice composto
+        const snapshot = await db.collection('kanban_todo')
+            .where('userId', '==', user.uid)
+            .get();
+
+        todoItems = [];
+        snapshot.forEach(doc => {
+            todoItems.push({ id: doc.id, ...doc.data() });
+        });
+
+        // Ordenar localmente por data de criação
+        todoItems.sort((a, b) => new Date(a.dataCriacao) - new Date(b.dataCriacao));
+
+        renderizarTodoList();
+    } catch (error) {
+        console.error('Erro ao carregar todo list:', error);
+    }
+}
+
+// Renderizar tarefas no quadro
+function renderizarTarefas() {
+    // Limpar containers
+    document.getElementById('tasksIniciar').innerHTML = '';
+    document.getElementById('tasksAndamento').innerHTML = '';
+    document.getElementById('tasksAnalisar').innerHTML = '';
+    document.getElementById('tasksFinalizado').innerHTML = '';
+
+    tarefas.forEach(tarefa => {
+        const taskElement = criarElementoTarefa(tarefa);
+        document.getElementById(`tasks${capitalize(tarefa.status)}`).appendChild(taskElement);
+    });
+
+    configurarDragAndDrop();
+}
+
+// Criar elemento HTML para tarefa
+function criarElementoTarefa(tarefa) {
+    const taskDiv = document.createElement('div');
+    taskDiv.className = 'kanban-task';
+    taskDiv.draggable = true;
+    taskDiv.dataset.id = tarefa.id;
+
+    const dataCriacao = new Date(tarefa.dataCriacao).toLocaleDateString('pt-BR');
+    const dataAtualizacao = tarefa.dataAtualizacao ? 
+        new Date(tarefa.dataAtualizacao).toLocaleDateString('pt-BR') : dataCriacao;
+
+    taskDiv.innerHTML = `
+        <div class="task-header">
+            <div class="task-titulo">${tarefa.titulo}</div>
+            <span class="task-prioridade prioridade-${tarefa.prioridade}">${tarefa.prioridade}</span>
+        </div>
+        ${tarefa.descricao ? `<div class="task-descricao">${tarefa.descricao}</div>` : ''}
+        <div class="task-footer">
+            <div class="task-datas">
+                <div>Criado: ${dataCriacao}</div>
+                ${dataAtualizacao !== dataCriacao ? `<div>Atualizado: ${dataAtualizacao}</div>` : ''}
+            </div>
+            <div class="task-actions">
+                <button class="task-action editar" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="task-action excluir" title="Excluir">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Eventos dos botões
+    taskDiv.querySelector('.editar').addEventListener('click', () => editarTarefa(tarefa.id));
+    taskDiv.querySelector('.excluir').addEventListener('click', () => excluirTarefa(tarefa.id));
+
+    return taskDiv;
+}
+
+// Configurar drag and drop
+function configurarDragAndDrop() {
+    const tasks = document.querySelectorAll('.kanban-task');
+    const columns = document.querySelectorAll('.kanban-column');
+
+    tasks.forEach(task => {
+        task.addEventListener('dragstart', (e) => {
+            tarefaArrastada = task;
+            task.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', task.dataset.id);
+        });
+
+        task.addEventListener('dragend', () => {
+            task.classList.remove('dragging');
+            tarefaArrastada = null;
+        });
+    });
+
+    columns.forEach(column => {
+        column.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(column, e.clientY);
+            const dragging = document.querySelector('.dragging');
+            
+            if (afterElement == null) {
+                column.querySelector('.tasks-container').appendChild(dragging);
+            } else {
+                column.querySelector('.tasks-container').insertBefore(dragging, afterElement);
+            }
+        });
+
+        column.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const taskId = e.dataTransfer.getData('text/plain');
+            const novoStatus = column.dataset.status;
+            
+            atualizarStatusTarefa(taskId, novoStatus);
+        });
+    });
+}
+
+// Função auxiliar para posicionamento do drag and drop
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.kanban-task:not(.dragging)')];
+
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// Atualizar status da tarefa
+async function atualizarStatusTarefa(taskId, novoStatus) {
+    try {
+        const tarefa = tarefas.find(t => t.id === taskId);
+        if (!tarefa || tarefa.status === novoStatus) return;
+
+        await db.collection('kanban_tarefas').doc(taskId).update({
+            status: novoStatus,
+            dataAtualizacao: new Date().toISOString()
+        });
+
+        // Atualizar localmente
+        tarefa.status = novoStatus;
+        tarefa.dataAtualizacao = new Date().toISOString();
+
+        renderizarTarefas();
+        atualizarContadores();
+        showToast('Tarefa movida com sucesso!', 'success');
+    } catch (error) {
+        console.error('Erro ao atualizar status:', error);
+        showToast('Erro ao mover tarefa', 'error');
+        // Recarregar para sincronizar
+        carregarTarefas();
+    }
+}
+
+// Abrir modal para nova tarefa
+function abrirModalTarefa() {
+    tarefaId.value = '';
+    tarefaTitulo.value = '';
+    tarefaDescricao.value = '';
+    tarefaPrioridade.value = 'media';
+    document.getElementById('modalTarefaTitle').innerHTML = '<i class="fas fa-plus-circle"></i> Nova Tarefa';
+    modalTarefa.style.display = 'flex';
+    tarefaTitulo.focus();
+}
+
+// Fechar modal
+function fecharModalTarefa() {
+    modalTarefa.style.display = 'none';
+}
+
+// Salvar tarefa
+async function salvarTarefa(e) {
+    e.preventDefault();
+
+    const tarefaData = {
+        titulo: tarefaTitulo.value.trim(),
+        descricao: tarefaDescricao.value.trim(),
+        prioridade: tarefaPrioridade.value,
+        status: 'iniciar',
+        userId: user.uid,
+        dataCriacao: new Date().toISOString(),
+        dataAtualizacao: new Date().toISOString()
+    };
+
+    try {
+        if (tarefaId.value) {
+            // Editar tarefa existente
+            await db.collection('kanban_tarefas').doc(tarefaId.value).update({
+                ...tarefaData,
+                dataAtualizacao: new Date().toISOString()
+            });
+            showToast('Tarefa atualizada com sucesso!', 'success');
+        } else {
+            // Nova tarefa
+            await db.collection('kanban_tarefas').add(tarefaData);
+            showToast('Tarefa criada com sucesso!', 'success');
+        }
+
+        fecharModalTarefa();
+        await carregarTarefas();
+    } catch (error) {
+        console.error('Erro ao salvar tarefa:', error);
+        showToast('Erro ao salvar tarefa', 'error');
+    }
+}
+
+// Editar tarefa
+async function editarTarefa(id) {
+    const tarefa = tarefas.find(t => t.id === id);
+    if (!tarefa) return;
+
+    tarefaId.value = tarefa.id;
+    tarefaTitulo.value = tarefa.titulo;
+    tarefaDescricao.value = tarefa.descricao || '';
+    tarefaPrioridade.value = tarefa.prioridade;
+    
+    document.getElementById('modalTarefaTitle').innerHTML = '<i class="fas fa-edit"></i> Editar Tarefa';
+    modalTarefa.style.display = 'flex';
+    tarefaTitulo.focus();
+}
+
+// Excluir tarefa
+async function excluirTarefa(id) {
+    if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return;
+
+    try {
+        await db.collection('kanban_tarefas').doc(id).delete();
+        showToast('Tarefa excluída com sucesso!', 'success');
+        await carregarTarefas();
+    } catch (error) {
+        console.error('Erro ao excluir tarefa:', error);
+        showToast('Erro ao excluir tarefa', 'error');
+    }
+}
+
+// Atualizar contadores
+function atualizarContadores() {
+    const counts = {
+        iniciar: tarefas.filter(t => t.status === 'iniciar').length,
+        andamento: tarefas.filter(t => t.status === 'andamento').length,
+        analisar: tarefas.filter(t => t.status === 'analisar').length,
+        finalizado: tarefas.filter(t => t.status === 'finalizado').length
+    };
+
+    document.getElementById('countIniciar').textContent = counts.iniciar;
+    document.getElementById('countAndamento').textContent = counts.andamento;
+    document.getElementById('countAnalisar').textContent = counts.analisar;
+    document.getElementById('countFinalizado').textContent = counts.finalizado;
+}
+
+// Limpar quadro
+async function limparQuadro() {
+    if (!confirm('Tem certeza que deseja limpar todo o quadro? Esta ação não pode ser desfeita.')) return;
+
+    try {
+        const batch = db.batch();
+        const snapshot = await db.collection('kanban_tarefas')
+            .where('userId', '==', user.uid)
+            .get();
+
+        snapshot.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+
+        await batch.commit();
+        showToast('Quadro limpo com sucesso!', 'success');
+        await carregarTarefas();
+    } catch (error) {
+        console.error('Erro ao limpar quadro:', error);
+        showToast('Erro ao limpar quadro', 'error');
+    }
+}
+
+// Todo List functions
+async function adicionarTodo() {
+    const texto = novaTarefaTodo.value.trim();
+    if (!texto) return;
+
+    try {
+        await db.collection('kanban_todo').add({
+            texto: texto,
+            concluida: false,
+            userId: user.uid,
+            dataCriacao: new Date().toISOString()
+        });
+
+        novaTarefaTodo.value = '';
+        await carregarTodoList();
+        showToast('Tarefa adicionada!', 'success');
+    } catch (error) {
+        console.error('Erro ao adicionar tarefa:', error);
+        showToast('Erro ao adicionar tarefa', 'error');
+    }
+}
+
+function renderizarTodoList() {
+    todoList.innerHTML = '';
+
+    // Ordenar: não concluídas primeiro, depois concluídas
+    const todoItemsOrdenados = [...todoItems].sort((a, b) => {
+        if (a.concluida && !b.concluida) return 1; // a (concluída) vai depois
+        if (!a.concluida && b.concluida) return -1; // a (não concluída) vai antes
+        return new Date(a.dataCriacao) - new Date(b.dataCriacao); // ordenar por data
+    });
+
+    todoItemsOrdenados.forEach(item => {
+        const todoItem = document.createElement('div');
+        todoItem.className = `todo-item ${item.concluida ? 'concluida' : ''}`;
+        todoItem.dataset.id = item.id;
+
+        todoItem.innerHTML = `
+            <div class="todo-checkbox ${item.concluida ? 'checked' : ''}">
+                ${item.concluida ? '<i class="fas fa-check"></i>' : ''}
+            </div>
+            <div class="todo-text">${item.texto}</div>
+            <button class="todo-remove">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+
+        // Eventos
+        todoItem.querySelector('.todo-checkbox').addEventListener('click', () => toggleTodo(item.id));
+        todoItem.querySelector('.todo-remove').addEventListener('click', () => removerTodo(item.id));
+
+        todoList.appendChild(todoItem);
+    });
+}
+
+async function toggleTodo(id) {
+    const item = todoItems.find(i => i.id === id);
+    if (!item) return;
+
+    try {
+        await db.collection('kanban_todo').doc(id).update({
+            concluida: !item.concluida
+        });
+
+        await carregarTodoList();
+    } catch (error) {
+        console.error('Erro ao atualizar tarefa:', error);
+        showToast('Erro ao atualizar tarefa', 'error');
+    }
+}
+
+async function removerTodo(id) {
+    try {
+        await db.collection('kanban_todo').doc(id).delete();
+        await carregarTodoList();
+        showToast('Tarefa removida!', 'success');
+    } catch (error) {
+        console.error('Erro ao remover tarefa:', error);
+        showToast('Erro ao remover tarefa', 'error');
+    }
+}
 
 // ============================================
 // FUNÇÕES PARA ALTERAÇÃO DO TIPO DE CHAMADO
@@ -2112,6 +2584,12 @@ async function generateAutoCode() {
         const snapshot = await db.collection('erros_suporte').get();
         return `ERR${(snapshot.size + 1).toString().padStart(4, '0')}`;
     }
+}
+
+// Função para capitalizar texto
+function capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 // Função para formatar data

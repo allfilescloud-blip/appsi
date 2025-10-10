@@ -34,6 +34,9 @@
                     <button id="btnNavSuporte" class="nav-btn">
                         <i class="fas fa-life-ring"></i> Suporte
                     </button>
+					<button id="btnNavKanban" class="nav-btn">
+						<i class="fas fa-columns"></i> Kanban
+					</button>
                 </div>
             </div>
             
@@ -131,53 +134,106 @@
             </div>
         </div>
         
-        <!-- Página de Dashboard -->
-        <div id="paginaDashboard" class="hidden">
-            <h2>Dashboard</h2>
-            
-            <div class="dashboard">
-                <!-- Seção de Pedidos Ideris -->
-                <div class="ideris-section">
-                    <div class="ideris-header">
-                        <h3>Pedidos Ideris</h3>
-                        <button id="btnAtualizarIderis" class="btn"><i class="fas fa-sync-alt"></i> Atualizar</button>
-                    </div>
-                    <div class="ideris-status" id="iderisStatus">Aguardando autenticação...</div>
-                    <div class="ideris-grid" id="iderisGrid"></div>
-                </div>
-                
-                <!-- Cards de Chamados -->
-                <div class="dashboard-grid">
-                    <div class="dashboard-card">
-                        <h3>Chamados em Aberto Hoje</h3>
-                        <div class="number" id="chamadosAbertosHoje">0</div>
-                    </div>
-                    
-                    <div class="dashboard-card">
-                        <h3>Chamados na Semana</h3>
-                        <div class="number" id="chamadosSemana">0</div>
-                    </div>
-                    
-                    <div class="dashboard-card">
-                        <h3>Chamados no Mês</h3>
-                        <div class="number" id="chamadosMes">0</div>
-                    </div>
-                </div>
-                
-                <!-- Estatísticas por Responsável -->
-                <div class="chart-container">
-                    <h3>Chamados Abertos por Responsável</h3>
-                    <div class="user-stats" id="userStats">
-                        <div class="loading">Carregando estatísticas...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
+		<!-- Página de Dashboard -->
+		<div id="paginaDashboard" class="hidden">
+			<div class="dashboard-header">
+				<h2><i class="fas fa-chart-bar"></i> Dashboard</h2>
+				<div class="dashboard-actions">
+					<button id="btnAtualizarGeral" class="btn btn-primary">
+						<i class="fas fa-sync-alt"></i> Atualizar Dashboard
+					</button>
+				</div>
+			</div>
+			
+			<div class="dashboard">
+				<!-- Seção de Pedidos Ideris -->
+				<div class="dashboard-section">
+					<div class="section-header">
+						<h3><i class="fas fa-shopping-cart"></i> Pedidos Ideris</h3>
+						<button id="btnAtualizarIderis" class="btn btn-outline hidden">
+							<i class="fas fa-sync-alt"></i> Atualizar
+						</button>
+					</div>
+					<div class="section-content">
+						<div class="status-indicator" id="iderisStatus">
+							<span class="status-dot"></span>
+							<span class="status-text">Aguardando autenticação...</span>
+						</div>
+						<div class="orders-grid" id="iderisGrid">
+							<!-- Conteúdo será preenchido dinamicamente -->
+						</div>
+					</div>
+				</div>
+				
+				<!-- Cards de Métricas -->
+				<div class="dashboard-section">
+					<div class="section-header">
+						<h3><i class="fas fa-chart-line"></i> Métricas de Chamados</h3>
+					</div>
+					<div class="metrics-container">
+						<div class="metrics-grid">
+							<div class="metric-card">
+								<div class="metric-icon">
+									<i class="fas fa-calendar-day"></i>
+								</div>
+								<div class="metric-content">
+									<div class="metric-value" id="chamadosAbertosHoje">0</div>
+									<div class="metric-label">Chamados em Aberto Hoje</div>
+								</div>
+								<div class="metric-trend positive">
+									<i class="fas fa-arrow-up"></i>
+								</div>
+							</div>
+							
+							<div class="metric-card">
+								<div class="metric-icon">
+									<i class="fas fa-calendar-week"></i>
+								</div>
+								<div class="metric-content">
+									<div class="metric-value" id="chamadosSemana">0</div>
+									<div class="metric-label">Chamados na Semana</div>
+								</div>
+								<div class="metric-trend negative">
+									<i class="fas fa-arrow-down"></i>
+								</div>
+							</div>
+							
+							<div class="metric-card">
+								<div class="metric-icon">
+									<i class="fas fa-calendar-alt"></i>
+								</div>
+								<div class="metric-content">
+									<div class="metric-value" id="chamadosMes">0</div>
+									<div class="metric-label">Chamados no Mês</div>
+								</div>
+								<div class="metric-trend positive">
+									<i class="fas fa-arrow-up"></i>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				
+				<!-- Estatísticas por Responsável -->
+				<div class="dashboard-section">
+					<div class="section-header">
+						<h3><i class="fas fa-users"></i> Chamados Abertos por Responsável</h3>
+					</div>
+					<div class="section-content">
+						<div class="user-stats" id="userStats">
+							<div class="loading-spinner">
+								<i class="fas fa-spinner fa-spin"></i>
+								<span>Carregando estatísticas...</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>        
         <!-- Página de Listagem -->
         <div id="paginaListagem" class="hidden">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2>Chamados</h2>
+                <h2><i class="fas fa-list"></i> Chamados</h2>
                 <button id="btnNovoChamado" class="btn"><i class="fas fa-plus"></i> Novo Chamado</button>
             </div>
             
@@ -503,7 +559,7 @@
         
         <!-- Página de Verificação (inicialmente oculta) -->
         <div id="paginaVerificacao" class="hidden">
-            <button id="btnVoltarVerificacao" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            <button id="btnVoltarVerificacao" class="btn voltar hidden"><i class="fas fa-arrow-left"></i> Voltar</button>
             
             <div class="verificacao-header">
                 <h2>Verificação de Pedidos - Hub Ideris</h2>
@@ -542,7 +598,7 @@
         
         <!-- Página de Configurações (inicialmente oculta) -->
         <div id="paginaConfiguracoes" class="hidden">
-            <button id="btnVoltarConfiguracoes" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            <button id="btnVoltarConfiguracoes" class="btn voltar hidden"><i class="fas fa-arrow-left"></i> Voltar</button>
             
             <div class="configuracao-header">
                 <h2>Configurações do Sistema</h2>
@@ -570,7 +626,7 @@
         
         <!-- Página de Estoque (inicialmente oculta) -->
         <div id="paginaEstoque" class="hidden">
-            <button id="btnVoltarEstoque" class="btn voltar"><i class="fas fa-arrow-left"></i> Voltar</button>
+            <button id="btnVoltarEstoque" class="btn voltar hidden"><i class="fas fa-arrow-left"></i> Voltar</button>
             
             <div class="estoque-header">
                 <h2>Consulta e Atualização de SKUs - Hub Ideris</h2>
@@ -780,6 +836,128 @@
 		<button class="image-modal-nav image-modal-next">
 			<i class="fas fa-chevron-right"></i>
 		</button>
+	</div>
+	
+	<!-- Página Kanban (inicialmente oculta) -->
+	<div id="paginaKanban" class="hidden">
+		<!-- Container principal com 97% de largura -->
+		<div style="width: 97%; margin: 0 auto;">
+			<!-- Cabeçalho apenas com o título -->
+			<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding: 0 10px;">
+				<h2 style="margin: 0; color: #1e293b;">
+					<i class="fas fa-columns"></i> 
+					Meu Quadro Kanban
+				</h2>
+			</div>
+			
+			<!-- Botões acima das colunas -->
+			<div style="display: flex; justify-content: flex-begin; margin-bottom: 20px; padding: 0 10px;">
+				<div style="display: flex; gap: 12px;">
+					<button id="btnNovaTarefa" class="btn">
+						<i class="fas fa-plus"></i> Nova Tarefa
+					</button>
+					<button id="btnLimparKanban" class="btn btn-warning">
+						<i class="fas fa-trash"></i> Limpar Quadro
+					</button>
+				</div>
+			</div>
+			
+			<div class="kanban-container">
+				<!-- Quadro Kanban -->
+				<div class="kanban-board">
+					<div class="kanban-column" data-status="iniciar">
+						<div class="column-header">
+							<h3>Iniciar</h3>
+							<span class="column-count" id="countIniciar">0</span>
+						</div>
+						<div class="tasks-container" id="tasksIniciar">
+							<!-- Tarefas serão adicionadas aqui -->
+						</div>
+					</div>
+					
+					<div class="kanban-column" data-status="andamento">
+						<div class="column-header">
+							<h3>Em Andamento</h3>
+							<span class="column-count" id="countAndamento">0</span>
+						</div>
+						<div class="tasks-container" id="tasksAndamento">
+							<!-- Tarefas serão adicionadas aqui -->
+						</div>
+					</div>
+					
+					<div class="kanban-column" data-status="analisar">
+						<div class="column-header">
+							<h3>Analisar</h3>
+							<span class="column-count" id="countAnalisar">0</span>
+						</div>
+						<div class="tasks-container" id="tasksAnalisar">
+							<!-- Tarefas serão adicionadas aqui -->
+						</div>
+					</div>
+					
+					<div class="kanban-column" data-status="finalizado">
+						<div class="column-header">
+							<h3>Finalizado</h3>
+							<span class="column-count" id="countFinalizado">0</span>
+						</div>
+						<div class="tasks-container" id="tasksFinalizado">
+							<!-- Tarefas serão adicionadas aqui -->
+						</div>
+					</div>
+				</div>
+				
+				<!-- Coluna lateral - To-do List -->
+				<div class="todo-sidebar">
+					<h3><i class="fas fa-check-circle"></i> Lista de Tarefas</h3>
+					<div class="todo-input">
+						<input type="text" id="novaTarefaTodo" placeholder="Adicionar nova tarefa...">
+						<button id="btnAddTodo" class="btn"><i class="fas fa-plus"></i></button>
+					</div>
+					<div class="todo-list" id="todoList">
+						<!-- Tarefas serão adicionadas aqui -->
+					</div>
+				</div>
+				
+			</div>
+		</div>
+	</div>
+
+	<!-- Modal para nova tarefa Kanban -->
+	<div id="modalTarefa" class="modal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2 id="modalTarefaTitle"><i class="fas fa-plus-circle"></i> Nova Tarefa</h2>
+				<span class="close">&times;</span>
+			</div>
+			<form id="formTarefa">
+				<input type="hidden" id="tarefaId">
+				<div class="form-group">
+					<label for="tarefaTitulo"><i class="fas fa-heading"></i> Título</label>
+					<input type="text" id="tarefaTitulo" class="form-control" required maxlength="100">
+				</div>
+				<div class="form-group">
+					<label for="tarefaDescricao"><i class="fas fa-align-left"></i> Descrição</label>
+					<textarea id="tarefaDescricao" class="form-control" rows="4" maxlength="500"></textarea>
+				</div>
+				<div class="form-group">
+					<label for="tarefaPrioridade"><i class="fas fa-flag"></i> Prioridade</label>
+					<select id="tarefaPrioridade" class="form-control">
+						<option value="baixa">Baixa</option>
+						<option value="media" selected>Média</option>
+						<option value="alta">Alta</option>
+						<option value="urgente">Urgente</option>
+					</select>
+				</div>
+				<div class="form-actions">
+					<button type="button" class="btn btn-secondary" id="cancelarTarefa">
+						<i class="fas fa-times"></i> Cancelar
+					</button>
+					<button type="submit" class="btn btn-success" id="salvarTarefa">
+						<i class="fas fa-save"></i> Salvar
+					</button>
+				</div>
+			</form>
+		</div>
 	</div>
 
     <script src="scripts/firebase-config.js"></script>
