@@ -1747,7 +1747,10 @@ auth.onAuthStateChanged(async (firebaseUser) => {
         
         // Mostrar dashboard como página inicial
         mostrarPagina(paginaDashboard);
-        
+		
+        // INICIALIZAR SISTEMA KANBAN - ADICIONE ESTA LINHA
+        inicializarKanban();    
+		
         // Iniciar autenticação Ideris APENAS quando o usuário estiver logado
         try {
             await loginIderis();
@@ -1760,10 +1763,7 @@ auth.onAuthStateChanged(async (firebaseUser) => {
 
         // Inicializar sistema de suporte
         initializeSuporteSystem();
-
-        // INICIALIZAR SISTEMA KANBAN - ADICIONE ESTA LINHA
-        inicializarKanban();
-
+		
     } else {
         // Usuário não logado
         user = null;
